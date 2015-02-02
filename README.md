@@ -21,8 +21,17 @@ Note that the replacement of your links to Smurfy are only done for single posts
 5. Click the "Plugins" item on the sidebar.
 6. You should now see an entry for "Display Smurfy Mech Data" in the list of available plugins.
 7. Cick the "activate" link for the plugin.
-8. Profit! *(Hopefully!)*
- 
+
+If everything works, your Smurfy links should now look look something like this:
+
+**Link Collapsed**
+
+![Collapsed Link](wp-smurfy-mech-data-collapsed.jpg?raw=true  "Collapsed")
+
+**Link Expanded**
+
+![Expanded Link](wp-smurfy-mech-data-expanded.jpg?raw=true  "Expanded")
+
 **About the files**
 
 * **display-smurfy-mech-data.php** - This is the main file for the plugin. It does the parsing and replacing of your links.
