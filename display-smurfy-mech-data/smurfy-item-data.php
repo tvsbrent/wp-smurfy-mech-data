@@ -1,5 +1,6 @@
 <?php
-/* NOTE: This file is generated from game data. */
+// NOTE: This file is generated from game data. 
+// Created: 2015-02-02, Client Version: 1.3.364.0
 namespace SmurfyMechData;
 function getItemData() { 
   $item_data = array ( 
