@@ -37,4 +37,4 @@ If everything works, your Smurfy links should now look something like this:
 * **display-smurfy-mech-data.php** - This is the main file for the plugin. It does the parsing and replacing of your links.
 * **display-smurfy-mech-data.css** - This is the style sheet for the plugin. I tried to keep the styling generic enough that it should work with your site's theme. However, feel free to tweak it as you need.
 * **display-smurfy-mech-data.js** - Some simple jQuery to allow users to expand and collapse the mech data.
-* **smurfy-item-data.php** - The data retrieved from Smurfy does not have information an equipped weapon's type (energy, ballastic, etc.), nor does it have the number of shots per ton of ammo. This file contains that information. When new weapons or ammo types are introduced, this file will need to be updated.
+* **smurfy-item-data.php** - The data retrieved from Smurfy does not have information on an equipped weapon's type (energy, ballastic, etc.), nor does it have the number of shots per ton of ammo. This file contains that information. When new weapons or ammo types are introduced, this file will need to be updated.
