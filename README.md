@@ -8,7 +8,7 @@ The plugin looks for the following markup in any of your posts:
 
     <a href="http://mwo.smurfy-net.de/mechlab#i=
 
-If it finds any such markup, it parses out the mech chassis ID and loadout ID from the remainder of the link. (That's the 'i=' and 'l=' portion of the link.) It then requests two JSON files from mwo.smurfy-net.de. With those two JSON files in-hand, it begins creating formatted HTML and places them in the body of your post.
+If it finds any such markup, it parses out the mech chassis ID and loadout ID from the remainder of the link. (That's the 'i=' and 'l=' portion of the link.) It then requests two JSON files from mwo.smurfy-net.de. With those two JSON files in-hand, it begins creating formatted HTML and places it in the body of your post in place of your original link.
 
 Note that the replacement of your links to Smurfy are only done for single posts. If a user is viewing several posts at once, for instance viewing all the posts of a certain category, the links are not replaced.
 
@@ -22,7 +22,7 @@ Note that the replacement of your links to Smurfy are only done for single posts
 6. You should now see an entry for "Display Smurfy Mech Data" in the list of available plugins.
 7. Cick the "activate" link for the plugin.
 
-If everything works, your Smurfy links should now look look something like this:
+If everything works, your Smurfy links should now look something like this:
 
 **Link Collapsed**
 
