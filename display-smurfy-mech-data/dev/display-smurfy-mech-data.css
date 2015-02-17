@@ -1,12 +1,14 @@
 .dsmd-container {
   box-sizing: content-box;
   position: relative;
-  min-width: 580px;
+  min-width: 200px;
+  max-width: 760px;
   height: 25px;
   border: 1px solid black;
   border-radius: 3px;
   padding: 5px;
   overflow: hidden;
+  margin: 1px 0;
   -webkit-transition: height 0.6s linear;
   -moz-transition: height 0.6s linear;
   transition: height 0.6s linear;
@@ -47,16 +49,71 @@
   cursor: pointer;
 }
 
-.dsmd-arrow-up {
+.dsmd-expander-arrow-up {
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   border-bottom: 10px solid black;
 }
 
-.dsmd-arrow-down {
+.dsmd-expander-arrow-down {
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   border-top: 10px solid black;
+}
+
+.dsmd-expander-loading {
+  -webkit-animation-duration: 1s;
+  -moz-animation-duration: 1s;
+  animation-duration: 1s;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+  -webkit-animation-name: dsmd-expander-loading-rotate;
+  -moz-animation-name: dsmd-expander-loading-rotate;
+  animation-name: dsmd-expander-loading-rotate;
+  -webkit-animation-timing-function: linear;
+  -moz-animation-timing-function: linear;
+  animation-timing-function: linear;
+  top: 9px;
+  right: 6px;
+  height: 12px;
+  width: 12px;
+  border: 3px solid black;
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+
+.dsmd-expander-error {
+  top: 7px;
+  right: 5px;
+  border: 2px solid red;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  text-align: center;
+}
+
+.dsmd-expander-error:after {
+  content: '!';
+  color: red;
+  position: relative;
+  top: -4px;
+  font-weight: bolder;
+  font-size: 19px;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.dsmd-expander-errormsg {
+  position: absolute;
+  background: #FFF;
+  z-index: 10;
+  border: 1px solid black;
+  border-radius: 3px;
+  box-shadow: 3px 3px 3px;
+  padding: 3px;
+  width: 150px;
+  height: auto;
+  font-size: 14px;
 }
 
 .dsmd-mech-image {
@@ -73,12 +130,20 @@
   margin: 0 auto;
 }
 
+.dsmd-panel-container {
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  height: 100%;
+}
+
 .dsmd-panel {
   box-sizing: content-box;
   position: relative;
   vertical-align: top;
   display: inline-block;
-  margin: 0 3px 0 3px;
+  margin: 0 2px 0 2px;
+  min-width: 170px;
 }
 .dsmd-panel ul {
   list-style: none;
@@ -88,17 +153,14 @@
 .dsmd-panel ul li {
   font-style: normal;
   font-size: 12px;
-  padding: 2px;
-  margin: 4px 2px;
+  padding: 2px 2px 3px 2px;
+  margin: 2px 2px;
   line-height: 12px;
 }
 .dsmd-panel ul li.dsmd-li-title {
-  padding: 4px;
   background-color: black;
   color: white;
   font-weight: bold;
-  margin-top: 3px;
-  margin-bottom: 3px;
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
   border-radius: 3px;
@@ -122,6 +184,10 @@
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
   border-radius: 3px;
+}
+
+.dsmd-label-left {
+  float: left !important;
 }
 
 .dsmd-label-warning {
@@ -190,7 +256,67 @@
   background: #780705;
 }
 
+.dsmd-visible {
+  opacity: 1 !important;
+}
+
 .dsmd-hidden {
-  display: none !important;
-  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s linear;
+}
+
+@-webkit-keyframes dsmd-expander-loading-rotate {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@-moz-keyframes dsmd-expander-loading-rotate {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@keyframes dsmd-expander-loading-rotate {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 650px) {
+  .dsmd-mech-image {
+    display: none !important;
+    visibility: hidden;
+  }
 }

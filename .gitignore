@@ -1,4 +1,7 @@
+.idea/
+test/
 *.log
+*.bat
 .htaccess
 sitemap.xml
 sitemap.xml.gz
