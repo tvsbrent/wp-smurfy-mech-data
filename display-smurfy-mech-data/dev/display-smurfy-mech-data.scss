@@ -1,0 +1,297 @@
+@import "bourbon/bourbon";
+
+$box-sizing: content-box;
+$height-img: 200px;
+$height-status-footer: 14px;
+$item-font-size: 12px;
+$padding-container: 5px;
+$size-arrow: 10px;
+$size-collapsed: 25px;
+$size-expanded: 280px;
+$container-width-max: 760px;
+$container-width-min: 200px;
+$panel-width-min: 170px;
+$shared-backgroundcolor: #303030;
+
+.dsmd-container {
+  box-sizing: $box-sizing;
+  position: relative;
+  max-width: $container-width-max;
+  min-width: $container-width-min;
+  height: $size-collapsed;
+  border: 1px solid black;
+  border-radius: 3px;
+  padding: $padding-container;
+  overflow: hidden;
+
+  &.dsmd-animation {
+    @include transition( height 0.3s linear );
+  }
+
+  &.dsmd-expanded {
+    height: $size-expanded;
+  }
+}
+
+
+.dsmd-title {
+  box-sizing: $box-sizing;
+  font-weight: bold;
+  font-style: normal;
+  line-height: $size-collapsed;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid black;
+  a {
+    box-sizing: $box-sizing;
+    display: inline;
+    margin-left: 5px;
+    text-decoration: none !important;
+    border-bottom: none !important;
+  }
+}
+
+.dsmd-expander {
+  display: inline;
+  background-color: transparent;
+  position: absolute;
+  top: $size-collapsed /2 ;
+  right: $padding-container;
+  z-index: 1;
+  width: auto;
+  height: 0;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  &.dsmd-expander-loading {
+    @include animation( dsmd-expander-loading-rotate 1s linear infinite );
+    top: 9px;
+    right: 6px;
+    height: 12px;
+    width: 12px;
+    border: 3px solid #303030;
+    border-right-color: transparent;
+    border-radius: 50%;
+  }
+
+  &.dsmd-expander-arrow-up {
+    border-left: $size-arrow solid transparent;
+    border-right: $size-arrow solid transparent;
+    border-bottom: $size-arrow solid $shared-backgroundcolor;
+  }
+
+  &.dsmd-expander-arrow-down {
+    border-left: $size-arrow solid transparent;
+    border-right: $size-arrow solid transparent;
+    border-top: $size-arrow solid $shared-backgroundcolor;
+  }
+
+  &.dsmd-expander-error {
+    top: 7px;
+    right: 5px;
+    border: 2px solid red;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+  }
+
+  &.dsmd-expander-error:after {
+    content: '!';
+    color: red;
+    position: relative;
+    top: -4px;
+    font-weight: bolder;
+    font-size: 19px;
+    font-family: Helvetica, Arial, sans-serif;
+  }
+}
+
+.dsmd-expander-errormsg {
+  position: absolute;
+  background: #FFF;
+  z-index: 10;
+  border: 1px solid black;
+  border-radius: 3px;
+  box-shadow: 3px 3px 3px;
+  padding: 3px;
+  width: 150px;
+  height: auto;
+  font-size: 14px;
+}
+
+.dsmd-mech-image {
+  box-sizing: $box-sizing;
+  height: $height-img;
+  position: absolute;
+  right: $padding-container;
+  top: $size-expanded - $height-img - $height-status-footer - $padding-container;
+  //top: $size-collapsed + $padding-container + 4px;
+  img {
+    display: block;
+    width: auto;
+    height: 100%;
+    margin: 0 auto;
+  }
+
+  &.dsmd-compact{
+    display: none !important;
+    visibility: hidden;
+  }
+}
+
+.dsmd-panel-container {
+  box-sizing: content-box;
+  margin: 0;
+  padding: 0;
+  height: $size-expanded - 38;
+  overflow: hidden;
+
+  &.dsmd-compact{
+    overflow-y: visible !important;
+  }
+}
+
+.dsmd-panel {
+  box-sizing: $box-sizing;
+  position: relative;
+  vertical-align: top;
+  display: inline-block;
+  margin: 0 3px 0 3px;
+  min-width: $panel-width-min;
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 1px 0 1px 0;
+
+    li {
+      font-style: normal;
+      font-size: $item-font-size;
+      padding: 2px;
+      margin: 4px 2px;
+      line-height: $item-font-size;
+
+      &.dsmd-li-title {
+        //border-bottom: 1px solid black;
+        padding: 4px;
+        background-color: $shared-backgroundcolor;
+        color: white;
+        font-weight: bold;
+        margin-top: 3px;
+        margin-bottom: 3px;
+        border-radius: 3px;
+      }
+    }
+  }
+
+  &.dsmd-compact {
+    display: block !important;
+  }
+}
+
+.dsmd-label {
+  display: inline-block;
+  position: relative;
+  float: right;
+  padding: 2px 4px;
+  margin: -2px 2px 0 2px;
+  font-size: $item-font-size;
+  font-weight: bold;
+  line-height: $item-font-size;
+  color: #fff;
+  vertical-align: baseline;
+  horiz-align: right;
+  white-space: nowrap;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #999;
+  border-radius: 3px;
+}
+
+.dsmd-label-warning {
+  background-color:#f89406
+}
+
+.dsmd-label-success {
+  background-color: #468847
+}
+
+.dsmd-label-info {
+  background-color: #3a87ad
+}
+
+.dsmd-label-dps, .dsmd-label-dmg, .dsmd-label-ammo, .dsmd-label-cld, .dsmd-label-speed {
+  background-color: #468847
+}
+
+.dsmd-label-range, .dsmd-label-speed, .dsmd-label-cooling, .dsmd-label-hs {
+  background-color: #3a87ad
+}
+
+.dsmd-label-mech-hardpoint-energy {
+  background-color: #cb7834;
+  color: #000
+}
+
+.dsmd-label-mech-hardpoint-missile {
+  background-color: #6acd97;
+  color: #000
+}
+
+.dsmd-label-mech-hardpoint-ams {
+  background-color: #cc6664;
+  color: #000
+}
+
+.dsmd-label-mech-hardpoint-ecm {
+  background-color: #a1b051;
+  color: #000
+}
+
+.dsmd-label-mech-hardpoint-ballistic {
+  background-color: #846b95;
+  color: #000
+}
+
+.dsmd-status {
+  display: inline;
+  position: absolute;
+  line-height: $height-status-footer;
+  top: $size-expanded - $height-status-footer - $padding-container;
+  right: $padding-container;
+  z-index: 1;
+  width: auto;
+  background: $shared-backgroundcolor;
+  color: #fff;
+  padding: 5px;
+  font-size: 12px;
+  border-radius: 2px;
+
+  &.dsmd-compact {
+    display: none;
+  }
+
+  &.dsmd-invalid {
+    background: #780705
+  }
+}
+
+.dsmd-visible {
+  opacity: 1 !important;
+}
+
+.dsmd-hidden {
+  opacity: 0;
+  @include transition(opacity 0.2s linear);
+}
+
+@include keyframes(dsmd-expander-loading-rotate) {
+  0% {
+    @include transform( rotate(0deg) );
+  }
+  100% {
+    @include transform( rotate(360deg) );
+  }
+}

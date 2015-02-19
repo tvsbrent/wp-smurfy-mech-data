@@ -1,8 +1,5 @@
 // OPEN ISSUES: HANDLING SMALLER CONTAINER SIZES.
-// - Clean up state transitions - lock elements in place until resize done? No auto flow?
-// - Get height of title, size of content area to figure out panel size.
-//   - This works well enough, for now.
-// - position status text better or hide it? Reduce size of panel-container based on status size?
+// - Hide image earlier than switching to compact mode.
 
 var SmurfyApp = {
   urlBase: 'https://smurfyservlet.herokuapp.com/',
@@ -356,14 +353,16 @@ jQuery( document ).ready( function() {
   jQuery( '.dsmd-container' )
     .on( 'toggleState', function() {
       var container = jQuery( this );
-      container.toggleClass( 'dsmd-container-expanded' );
-      if( !SmurfyApp.Modernizr.csstransitions )
+      container.toggleClass( 'dsmd-expanded' );
+      if( !SmurfyApp.Modernizr.csstransitions ||
+          !container.hasClass( 'dsmd-animation' ) )
       {
         container.trigger( 'transitionend' );
       }
     } )
     .on( 'transitionend', function() {
-      var expander = jQuery(this).find( '.dsmd-expander' );
+      var container = jQuery(this);
+      var expander = container.find( '.dsmd-expander' );
       if( SmurfyApp.hasExpanderStateClasses( expander, 'loading' ) ||
           SmurfyApp.hasExpanderStateClasses( expander, 'open' ) )
       {
@@ -371,8 +370,8 @@ jQuery( document ).ready( function() {
       } else {
         SmurfyApp.setExpanderState( expander, 'open');
       }
-      //SmurfyApp.resizePanels( jQuery( this ) );
       expander.on( 'click', SmurfyApp.expanderClickHandler );
+      container.removeClass('dsmd-animation');
     } );
 
   jQuery( '.dsmd-expander' ).on( 'click', SmurfyApp.expanderClickHandler );

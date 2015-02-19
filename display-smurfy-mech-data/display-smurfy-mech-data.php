@@ -180,7 +180,7 @@ function FormatSmurfyLinks( $smurfyLink )
 {
   $body =
 <<<EOD
-  <div class="dsmd-container">
+  <div class="dsmd-container dsmd-animation">
     <div class="dsmd-title">
       {$smurfyLink->link}
       <span class="dsmd-expander dsmd-expander-arrow-down"></span>
