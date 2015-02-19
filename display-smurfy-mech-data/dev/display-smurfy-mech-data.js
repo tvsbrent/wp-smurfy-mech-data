@@ -1,8 +1,15 @@
+// OPEN ISSUES: HANDLING SMALLER CONTAINER SIZES.
+// - Clean up state transitions - lock elements in place until resize done? No auto flow?
+// - Get height of title, size of content area to figure out panel size.
+//   - This works well enough, for now.
+// - position status text better or hide it? Reduce size of panel-container based on status size?
+
 var SmurfyApp = {
   urlBase: 'https://smurfyservlet.herokuapp.com/',
   //urlBase: 'http://mwo.smurfy-net.de/',
   cachedChassis : {},
   cachedLoadouts : {},
+  isCompact : false,
   AjaxSettings : function( url ) {
     this.url            = url;
     this.timeout        = 7500;
@@ -18,7 +25,7 @@ var SmurfyApp = {
     this.loadout = loadoutID;
   },
   ExpanderBaseClass : 'dsmd-expander',
-  ExpanderState : {
+  ExpanderStateClasses : {
     'open'      : 'dsmd-expander-arrow-down',
     'close'     : 'dsmd-expander-arrow-up',
     'loading'   : 'dsmd-expander-loading',
@@ -70,11 +77,11 @@ SmurfyApp.getChassisAndLoadoutID = function( expander, dataID ) {
 };
 
 SmurfyApp.setExpanderState = function( expander, state ) {
-  expander.attr( "class", SmurfyApp.ExpanderBaseClass + " " + SmurfyApp.ExpanderState[state] );
+  expander.attr( "class", SmurfyApp.ExpanderBaseClass + " " + SmurfyApp.ExpanderStateClasses[state] );
 };
 
-SmurfyApp.hasExpanderState = function( expander, state ) {
-  return expander.hasClass( SmurfyApp.ExpanderState[state] );
+SmurfyApp.hasExpanderStateClasses = function( expander, state ) {
+  return expander.hasClass( SmurfyApp.ExpanderStateClasses[state] );
 };
 
 SmurfyApp.handleError = function( expander, errorMsg ) {
@@ -87,11 +94,60 @@ SmurfyApp.handleError = function( expander, errorMsg ) {
   SmurfyApp.showExpanderError( expander );
 };
 
+SmurfyApp.handleResizeComplete = function() {
+  var isFirst = true;
+  jQuery('.dsmd-container').each( function() {
+    if( isFirst ) {
+      // Just check one container's width, they'll all be this size.
+      isFirst = false;
+      if( !SmurfyApp.updateMinimizedState( jQuery(this).width() ) )
+      {
+        // The minimized state didn't change, so leave.
+        // Returning false breaks the each loop.
+        return false;
+      }
+    }
+    SmurfyApp.resizePanels( jQuery(this) );
+  });
+
+};
+
+SmurfyApp.updateMinimizedState = function( containerWidth ){
+  // Return true if the state changed
+  if( containerWidth < 540 && !SmurfyApp.isCompact )
+  {
+    // panels go parallel
+    SmurfyApp.isCompact = true;
+    return true;
+  }
+  else if( containerWidth >= 540 && SmurfyApp.isCompact )
+  {
+    SmurfyApp.isCompact = false;
+    return true;
+  }
+  return false;
+};
+
+SmurfyApp.resizePanels = function( container ) {
+  if( SmurfyApp.isCompact ) {
+    container.children('.dsmd-panel-container')
+      .addClass('dsmd-compact')
+      .children()
+        .addClass('dsmd-compact');
+  } else {
+    container.children('.dsmd-panel-container')
+      .removeClass('dsmd-compact')
+      .children()
+        .removeClass('dsmd-compact');
+  }
+};
+
 SmurfyApp.showExpanderError = function( expander ) {
   var expanderPos = expander.position();
+  var expanderOffset = expander.offset();
   var errmsg = jQuery( '.dsmd-expander-errormsg' );
   errmsg
-    .css( { top: expanderPos.top + ( expander.height() * 2 ), left: expanderPos.left + expander.width() - errmsg.width() } )
+    .css( { top: expanderOffset.top + ( expander.height() * 2 ), left: expanderOffset.left + expander.width() - errmsg.width() } )
     .text( expander.data( 'error-msg' ) )
     .addClass( 'dsmd-visible' );
 };
@@ -100,21 +156,20 @@ SmurfyApp.hideExpanderError = function() {
   jQuery( '.dsmd-expander-errormsg' ).removeClass( 'dsmd-visible' );
 };
 
-SmurfyApp.buildMechDataView = function( container, expander ) {
+SmurfyApp.getMechData = function( container, expander ) {
   try {
     var dataID = new SmurfyApp.DataID();
 
     container.on( 'dataReady', function() {
       container.off( 'dataReady' );
       try {
-        SmurfyApp.mechDataReady( container, dataID );
+        SmurfyApp.buildMechDataView( container, dataID );
       } catch ( errorMsg ) {
         SmurfyApp.handleError( expander, errorMsg );
       }
     } );
 
-    if( !SmurfyApp.getChassisAndLoadoutID( expander, dataID ) )
-    {
+    if( !SmurfyApp.getChassisAndLoadoutID( expander, dataID ) ){
       throw 'Failed to find Chassis or Loadout ID.';
     }
 
@@ -133,8 +188,7 @@ SmurfyApp.buildMechDataView = function( container, expander ) {
       container.trigger( 'chassisDataReady' );
     }
 
-    if( !SmurfyApp.cachedLoadouts.hasOwnProperty( dataID.key() ) )
-    {
+    if( !SmurfyApp.cachedLoadouts.hasOwnProperty( dataID.key() ) ){
       // Wait for the chassis data to load.
       container.on( 'chassisDataReady', function() {
         container.off( 'chassisDataReady');
@@ -153,7 +207,7 @@ SmurfyApp.buildMechDataView = function( container, expander ) {
   }
 };
 
-SmurfyApp.mechDataReady = function( container, dataID ) {
+SmurfyApp.buildMechDataView = function( container, dataID ) {
   var chassisData = SmurfyApp.cachedChassis[dataID.chassis];
   var loadoutData = SmurfyApp.cachedLoadouts[dataID.key()];
 
@@ -219,6 +273,7 @@ SmurfyApp.mechDataReady = function( container, dataID ) {
   var parsedDate = SmurfyApp.parseCreateDate( loadoutData.created_at );
 
   var displayData = {
+    compactClass      : SmurfyApp.isCompact ? 'dsmd-compact' : '',
     imgSrc            : 'http://mwo.smurfy-net.de/assetic/img/tt_image/' + chassisData.name + '.png',
     shortName         : chassisData.translated_short_name,
     isStock           : dataID.loadout.toLowerCase() === 'stock',
@@ -258,6 +313,8 @@ SmurfyApp.expanderClickHandler = function() {
   var expander = jQuery( this );
   var container = expander.closest( '.dsmd-container' );
 
+  // Turn off the click handler, if all goes well, we'll
+  // turn it back on later.
   expander.off( 'click' );
 
   if( container.hasClass( 'dsmd-container-expanded' ) ) {
@@ -275,54 +332,27 @@ SmurfyApp.expanderClickHandler = function() {
       container.on( 'viewBuilt', function() {
         container.trigger( 'toggleState' );
       } );
-      SmurfyApp.buildMechDataView( container, expander );
+      SmurfyApp.getMechData( container, expander );
     }
   }
 };
 
 jQuery( document ).ready( function() {
 
-  // This is crappy code to handle smaller windows.
-  // Make it better... flippers, to flip between panels?
-  // Scrollbars?
-  /*
-  var isParallel = false;
-  jQuery(window).resize( function() {
-    // Just get one container's width, they'll all be this size.
-    var updateCSS = false;
-    var containerWidth = jQuery('.dsmd-container').first().width();
-    if( containerWidth < 540 && !isParallel )
-    {
-      // panels go parallel
-      jQuery('.dsmd-panel').css( { display: 'block' } );
-      isParallel = true;
-      updateCSS = true;
-    }
-    else if( isParallel )
-    {
-      jQuery('.dsmd-panel').css( { display: 'inline-block' } );
-      isParallel = false;
-      updateCSS = true;
-    }
+  // Grab a single container object. If none exist, then
+  // we'll just leave, as there's nothing to do here.
+  var singleContainer = jQuery('.dsmd-container').first();
+  if( singleContainer.length === 0 ){
+    return;
+  }
 
-    if( updateCSS ) {
-      if( isParallel ) {
-        jQuery('.dsmd-panel-container').css( { 'overflow-y' : 'scroll' } );
-      } else {
-        jQuery('.dsmd-panel-container').css( { 'overflow-y' : 'none' } );
-      }
-      // Resize all the containers based on the panel container size.
-       // var titleHeight = jQuery('dsmd-title' ).first().height();jQuery('.dsmd-panel-container' ).each( function() {
-        var panelHeight = jQuery(this).height();
-        jQuery(this).closest('.dsmd-container' ).css({ height: titleHeight + panelHeight });
-      });
-    }
-  });
-  */
+  // Set the initial minimized state.
+  SmurfyApp.updateMinimizedState( singleContainer.width() );
 
   // create the error msg div
   jQuery('body').append( SmurfyApp.errorTemplate() );
 
+  // Setup the container event handlers
   jQuery( '.dsmd-container' )
     .on( 'toggleState', function() {
       var container = jQuery( this );
@@ -334,17 +364,26 @@ jQuery( document ).ready( function() {
     } )
     .on( 'transitionend', function() {
       var expander = jQuery(this).find( '.dsmd-expander' );
-      if( SmurfyApp.hasExpanderState( expander, 'loading' ) ||
-          SmurfyApp.hasExpanderState( expander, 'open' ) )
+      if( SmurfyApp.hasExpanderStateClasses( expander, 'loading' ) ||
+          SmurfyApp.hasExpanderStateClasses( expander, 'open' ) )
       {
         SmurfyApp.setExpanderState( expander, 'close');
       } else {
         SmurfyApp.setExpanderState( expander, 'open');
       }
+      //SmurfyApp.resizePanels( jQuery( this ) );
       expander.on( 'click', SmurfyApp.expanderClickHandler );
     } );
 
   jQuery( '.dsmd-expander' ).on( 'click', SmurfyApp.expanderClickHandler );
+
+  // The window resize event handler.
+  var resizeID;
+  jQuery(window).resize( function() {
+    clearTimeout( resizeID );
+    resizeID = setTimeout( SmurfyApp.handleResizeComplete, 200 );
+  });
+
 } );
 
 //////////////////////////////////////////////////////////////
@@ -353,11 +392,11 @@ jQuery( document ).ready( function() {
 SmurfyApp.errorTemplate = _.template('<div class="dsmd-expander-errormsg dsmd-hidden"></div>');
 
 SmurfyApp.mechDataView = _.template(' \
-  <div class="dsmd-panel-container"> \
-    <span class="dsmd-mech-image"> \
+  <div class="dsmd-panel-container <%= compactClass %>"> \
+    <span class="dsmd-mech-image <%= compactClass %>"> \
       <img src="<%= imgSrc %>"> \
     </span> \
-    <div class="dsmd-panel"> \
+    <div class="dsmd-panel <%= compactClass %>"> \
       <ul> \
         <li class="dsmd-li-title">Stats</li> \
         <li>Chassis: <span class="dsmd-label dsmd-label-info"><%  if( isStock === true ) { %>Stock <% } %><%= shortName %> \
@@ -372,7 +411,7 @@ SmurfyApp.mechDataView = _.template(' \
       </ul> \
     </div> \
     \
-    <div class="dsmd-panel"> \
+    <div class="dsmd-panel <%= compactClass %>"> \
       <ul> \
         <li class="dsmd-li-title">Armaments</li> \
         <%  if( armaments === undefined || armaments.length == 0 ) { %> \
@@ -418,7 +457,7 @@ SmurfyApp.mechDataView = _.template(' \
       </ul> \
     </div> \
     \
-    <div class="dsmd-panel"> \
+    <div class="dsmd-panel <%= compactClass %>"> \
       <ul> \
         <li class="dsmd-li-title">Ammunition</li> \
         <%  if( ammunition === undefined || ammunition.length == 0 ) { %> \
@@ -436,5 +475,5 @@ SmurfyApp.mechDataView = _.template(' \
             } %> \
       </ul> \
     </div> \
-    <span class="dsmd-status <% if ( !isValid ) { %>dsmd-status-invalid<% } %>"> Created: <%= createdDate %><% if ( !isValid ) { %> (Invalid)<% } %></span> \
+    <span class="dsmd-status <%= compactClass %> <% if ( !isValid ) { %>dsmd-invalid<% } %>"> Created: <%= createdDate %><% if ( !isValid ) { %> (Invalid)<% } %></span> \
   </div>' );

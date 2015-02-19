@@ -52,13 +52,13 @@
 .dsmd-expander-arrow-up {
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-bottom: 10px solid black;
+  border-bottom: 10px solid #303030;
 }
 
 .dsmd-expander-arrow-down {
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-top: 10px solid black;
+  border-top: 10px solid #303030;
 }
 
 .dsmd-expander-loading {
@@ -78,7 +78,7 @@
   right: 6px;
   height: 12px;
   width: 12px;
-  border: 3px solid black;
+  border: 3px solid #303030;
   border-right-color: transparent;
   border-radius: 50%;
 }
@@ -129,12 +129,20 @@
   height: 100%;
   margin: 0 auto;
 }
+.dsmd-mech-image.dsmd-compact{
+  display: none !important;
+  visibility: hidden;
+}
 
 .dsmd-panel-container {
+  box-sizing: content-box;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
-  height: 100%;
+  height: 242px;
+  overflow: hidden;
+}
+.dsmd-panel-container.dsmd-compact{
+  overflow-y: visible !important;
 }
 
 .dsmd-panel {
@@ -158,12 +166,15 @@
   line-height: 12px;
 }
 .dsmd-panel ul li.dsmd-li-title {
-  background-color: black;
+  background-color: #303030;
   color: white;
   font-weight: bold;
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
   border-radius: 3px;
+}
+.dsmd-panel.dsmd-compact {
+  display: block !important;
 }
 
 .dsmd-label {
@@ -243,17 +254,21 @@
   right: 5px;
   z-index: 1;
   width: auto;
-  background: #1d5612;
+  background: #404040;
   color: #fff;
   padding: 5px;
   font-size: 12px;
-  -webkit-border-radius: 2px;
-  -moz-border-radius: 2px;
-  border-radius: 2px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
 }
 
-.dsmd-status-invalid {
-  background: #780705;
+.dsmd-status.dsmd-invalid {
+  background: #a30705;
+}
+
+.dsmd-status.dsmd-compact {
+  display: none;
 }
 
 .dsmd-visible {
@@ -311,12 +326,5 @@
     -ms-transform: rotate(360deg);
     -o-transform: rotate(360deg);
     transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 650px) {
-  .dsmd-mech-image {
-    display: none !important;
-    visibility: hidden;
   }
 }
