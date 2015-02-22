@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @package Display_Smurfy_Mech_Data
  * @version 1.0
@@ -11,10 +11,10 @@ Version: 1.0
 Author: Brent Schmidt
 */
 
-namespace SmurfyMechData;
+namespace DisplaySmurfyMechData;
 
 /* ADD SCRIPTS */
-add_action( 'init', 'SmurfyMechData\\AddScripts' );
+add_action( 'init', 'DisplaySmurfyMechData\\AddScripts' );
 function AddScripts()
 {
   if( !is_admin() )
@@ -26,7 +26,7 @@ function AddScripts()
 }
 
 /* ADD STYLES */
-add_action( 'wp_enqueue_scripts', 'SmurfyMechData\\AddStyles' );
+add_action( 'wp_enqueue_scripts', 'DisplaySmurfyMechData\\AddStyles' );
 function AddStyles()
 {
   if( !is_admin() )
@@ -53,7 +53,7 @@ class SmurfyLink
   public $endPosition = 0;
 }
 
-add_filter( 'the_content', 'SmurfyMechData\\ModifyContent' );
+add_filter( 'the_content', 'DisplaySmurfyMechData\\ModifyContent' );
 function ModifyContent( $content )
 { 
   $smurfyLinks = FindSmurfyLinks( $content );
