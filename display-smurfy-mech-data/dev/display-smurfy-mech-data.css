@@ -4,9 +4,10 @@
   max-width: 760px;
   min-width: 200px;
   height: 25px;
+  padding: 5px;
   border: 1px solid black;
   border-radius: 3px;
-  padding: 5px;
+  margin: 1px;
   overflow: hidden; }
   .dsmd-container.dsmd-animation {
     -webkit-transition: height 0.3s linear;
@@ -79,8 +80,10 @@
 
 .dsmd-expander-errormsg {
   position: absolute;
+  top: 0;
+  left: 0;
   background: #FFF;
-  z-index: 10;
+  z-index: -10;
   border: 1px solid black;
   border-radius: 3px;
   box-shadow: 3px 3px 3px;
@@ -92,17 +95,22 @@
 .dsmd-mech-image {
   box-sizing: content-box;
   height: 200px;
+  max-width: 180px;
   position: absolute;
-  right: 5px;
+  right: 15px;
   top: 61px; }
   .dsmd-mech-image img {
     display: block;
     width: auto;
-    height: 100%;
+    height: auto;
     margin: 0 auto; }
   .dsmd-mech-image.dsmd-compact {
-    display: none !important;
-    visibility: hidden; }
+    opacity: 0.4;
+    filter: alpha(opacity=40);
+    right: 0;
+    left: 0;
+    width: 100%;
+    margin: auto; }
 
 .dsmd-panel-container {
   box-sizing: content-box;
@@ -157,6 +165,8 @@
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #999;
   border-radius: 3px; }
+  .dsmd-label.dsmd-label-left {
+    float: left !important; }
 
 .dsmd-label-warning {
   background-color: #f89406; }
@@ -205,20 +215,23 @@
   color: #fff;
   padding: 5px;
   font-size: 12px;
-  border-radius: 2px; }
+  border-radius: 3px; }
   .dsmd-status.dsmd-compact {
     display: none; }
   .dsmd-status.dsmd-invalid {
     background: #780705; }
 
 .dsmd-visible {
-  opacity: 1 !important; }
+  opacity: 1 !important;
+  -webkit-transition: opacity 0.15s linear;
+  -moz-transition: opacity 0.15s linear;
+  transition: opacity 0.15s linear; }
 
 .dsmd-hidden {
   opacity: 0;
-  -webkit-transition: opacity 0.2s linear;
-  -moz-transition: opacity 0.2s linear;
-  transition: opacity 0.2s linear; }
+  -webkit-transition: opacity 0.15s linear;
+  -moz-transition: opacity 0.15s linear;
+  transition: opacity 0.15s linear; }
 
 @-webkit-keyframes dsmd-expander-loading-rotate {
   0% {

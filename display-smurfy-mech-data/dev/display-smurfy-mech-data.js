@@ -7,6 +7,7 @@ var SmurfyApp = {
   cachedChassis : {},
   cachedLoadouts : {},
   isCompact : false,
+  isImageVisible : true,
   AjaxSettings : function( url ) {
     this.url            = url;
     this.timeout        = 7500;
@@ -93,49 +94,76 @@ SmurfyApp.handleError = function( expander, errorMsg ) {
 
 SmurfyApp.handleResizeComplete = function() {
   var isFirst = true;
+  var updateImageVisibilityState = false;
+  var updateCompactState = false;
+
   jQuery('.dsmd-container').each( function() {
     if( isFirst ) {
-      // Just check one container's width, they'll all be this size.
       isFirst = false;
-      if( !SmurfyApp.updateMinimizedState( jQuery(this).width() ) )
-      {
-        // The minimized state didn't change, so leave.
+      // Just check one container's width, they'll all be this size.
+      var containerWidth = jQuery(this).width();
+      updateImageVisibilityState = SmurfyApp.updateImageVisibilityState( containerWidth );
+      updateCompactState = SmurfyApp.updateCompactState( containerWidth );
+      if( !updateImageVisibilityState && !updateCompactState ) {
+        // The compact state didn't change, so leave.
         // Returning false breaks the each loop.
         return false;
       }
     }
-    SmurfyApp.resizePanels( jQuery(this) );
+    jQuery(this).children('.dsmd-panel-container' ).each( function() {
+      SmurfyApp.resizePanelContainerElements( jQuery(this), updateImageVisibilityState, updateCompactState );
+    });
   });
 
 };
 
-SmurfyApp.updateMinimizedState = function( containerWidth ){
+SmurfyApp.updateImageVisibilityState = function( containerWidth ) {
+  if( containerWidth < 695 && SmurfyApp.isImageVisible ) {
+    SmurfyApp.isImageVisible = false;
+    return true;
+  } else if ( containerWidth >= 695 && !SmurfyApp.isImageVisible ) {
+    SmurfyApp.isImageVisible = true;
+    return true;
+  }
+  return false;
+};
+
+SmurfyApp.updateCompactState = function( containerWidth ){
   // Return true if the state changed
-  if( containerWidth < 540 && !SmurfyApp.isCompact )
-  {
-    // panels go parallel
+  if( containerWidth < 560 && !SmurfyApp.isCompact ) {
     SmurfyApp.isCompact = true;
     return true;
   }
-  else if( containerWidth >= 540 && SmurfyApp.isCompact )
-  {
+  else if( containerWidth >= 560 && SmurfyApp.isCompact ) {
     SmurfyApp.isCompact = false;
     return true;
   }
   return false;
 };
 
-SmurfyApp.resizePanels = function( container ) {
-  if( SmurfyApp.isCompact ) {
-    container.children('.dsmd-panel-container')
-      .addClass('dsmd-compact')
-      .children()
+SmurfyApp.resizePanelContainerElements = function( panelContainer, updateImageVisibilityState, updateCompactState ) {
+  if( updateImageVisibilityState ) {
+    if( !SmurfyApp.isImageVisible ) {
+      panelContainer.children('.dsmd-mech-image')
         .addClass('dsmd-compact');
-  } else {
-    container.children('.dsmd-panel-container')
-      .removeClass('dsmd-compact')
-      .children()
+    } else {
+      panelContainer.children('.dsmd-mech-image')
         .removeClass('dsmd-compact');
+    }
+  }
+
+  if( updateCompactState ) {
+    if( SmurfyApp.isCompact ) {
+      panelContainer
+        .addClass('dsmd-compact')
+        .children(':not(.dsmd-mech-image)')
+          .addClass('dsmd-compact');
+    } else {
+      panelContainer
+        .removeClass('dsmd-compact')
+        .children(':not(.dsmd-mech-image)')
+          .removeClass('dsmd-compact');
+    }
   }
 };
 
@@ -144,13 +172,23 @@ SmurfyApp.showExpanderError = function( expander ) {
   var expanderOffset = expander.offset();
   var errmsg = jQuery( '.dsmd-expander-errormsg' );
   errmsg
-    .css( { top: expanderOffset.top + ( expander.height() * 2 ), left: expanderOffset.left + expander.width() - errmsg.width() } )
+    .css( {
+      top: expanderOffset.top + ( expander.height() * 2 ),
+      left: expanderOffset.left + expander.width() - errmsg.width(),
+      "z-index": 10 } )
     .text( expander.data( 'error-msg' ) )
     .addClass( 'dsmd-visible' );
 };
 
 SmurfyApp.hideExpanderError = function() {
-  jQuery( '.dsmd-expander-errormsg' ).removeClass( 'dsmd-visible' );
+  var errorMsg = jQuery( '.dsmd-expander-errormsg' );
+  errorMsg.removeClass( 'dsmd-visible' );
+  window.setTimeout( function() {
+    errorMsg.css( {
+      top: 0,
+      left: 0,
+      "z-index": -10 } );
+  }, 250 );
 };
 
 SmurfyApp.getMechData = function( container, expander ) {
@@ -270,39 +308,40 @@ SmurfyApp.buildMechDataView = function( container, dataID ) {
   var parsedDate = SmurfyApp.parseCreateDate( loadoutData.created_at );
 
   var displayData = {
-    compactClass      : SmurfyApp.isCompact ? 'dsmd-compact' : '',
-    imgSrc            : 'http://mwo.smurfy-net.de/assetic/img/tt_image/' + chassisData.name + '.png',
-    shortName         : chassisData.translated_short_name,
-    isStock           : dataID.loadout.toLowerCase() === 'stock',
-    usedArmor         : loadoutData.stats.used_armor,
-    maxArmor          : chassisData.details.max_armor,
-    firepower         : loadoutData.stats.firepower,
-    dpsSustained      : SmurfyApp.roundValue(loadoutData.stats.dps_sustained),
-    dpsMax            : SmurfyApp.roundValue(loadoutData.stats.dps_max),
-    coolingEfficiency : loadoutData.stats.cooling_efficiency,
-    topSpeed          : loadoutData.stats.top_speed ? SmurfyApp.roundValue( loadoutData.stats.top_speed ) : 0,
-    topSpeedTweak     : loadoutData.stats.top_speed_tweak ? SmurfyApp.roundValue( loadoutData.stats.top_speed_tweak ): 0,
-    armaments         : loadoutData.stats.armaments,
-    engineType        : loadoutData.stats.engine_type,
-    engineRating      : loadoutData.stats.engine_rating,
-    jumpJets          : (loadoutData.stats.used_jump_jets || 0) + (loadoutData.stats.granted_jump_jets || 0 ),
-    jumpJetsMax       : chassisData.details.jump_jets,
-    heatSinks         : loadoutData.stats.heatsinks || 0,
-    hasElectronics    : hasElectronics,
-    ecmInstalled      : ecmInstalled,
-    activeProbe       : activeProbe,
-    targetingComputer : targetingComputer,
-    commandConsole    : commandConsole,
-    ammunition        : loadoutData.stats.ammunition,
-    upgrades          : upgrades,
-    isValid           : loadoutData.valid,
-    createdDate       : parsedDate
+    compactClass        : SmurfyApp.isCompact ? 'dsmd-compact' : '',
+    imgVisibilityClass  : !SmurfyApp.isImageVisible ? 'dsmd-compact' : '',
+    imgSrc              : 'http://mwo.smurfy-net.de/assetic/img/tt_image/' + chassisData.name + '.png',
+    shortName           : chassisData.translated_short_name,
+    isStock             : dataID.loadout.toLowerCase() === 'stock',
+    usedArmor           : loadoutData.stats.used_armor,
+    maxArmor            : chassisData.details.max_armor,
+    firepower           : loadoutData.stats.firepower,
+    dpsSustained        : SmurfyApp.roundValue(loadoutData.stats.dps_sustained),
+    dpsMax              : SmurfyApp.roundValue(loadoutData.stats.dps_max),
+    coolingEfficiency   : loadoutData.stats.cooling_efficiency,
+    topSpeed            : loadoutData.stats.top_speed ? SmurfyApp.roundValue( loadoutData.stats.top_speed ) : 0,
+    topSpeedTweak       : loadoutData.stats.top_speed_tweak ? SmurfyApp.roundValue( loadoutData.stats.top_speed_tweak ): 0,
+    armaments           : loadoutData.stats.armaments,
+    engineType          : loadoutData.stats.engine_type,
+    engineRating        : loadoutData.stats.engine_rating,
+    jumpJets            : (loadoutData.stats.used_jump_jets || 0) + (loadoutData.stats.granted_jump_jets || 0 ),
+    jumpJetsMax         : chassisData.details.jump_jets,
+    heatSinks           : loadoutData.stats.heatsinks || 0,
+    hasElectronics      : hasElectronics,
+    ecmInstalled        : ecmInstalled,
+    activeProbe         : activeProbe,
+    targetingComputer   : targetingComputer,
+    commandConsole      : commandConsole,
+    ammunition          : loadoutData.stats.ammunition,
+    upgrades            : upgrades,
+    isValid             : loadoutData.valid,
+    createdDate         : parsedDate
   };
 
   container
     .append( SmurfyApp.mechDataView( displayData ) )
     .attr( 'data-built-view', true )
-    .delay( 0.2 )
+    .delay( 0.4 )
     .trigger( 'viewBuilt' );
 };
 
@@ -344,7 +383,8 @@ jQuery( document ).ready( function() {
   }
 
   // Set the initial minimized state.
-  SmurfyApp.updateMinimizedState( singleContainer.width() );
+  SmurfyApp.updateImageVisibilityState( singleContainer.width() );
+  SmurfyApp.updateCompactState( singleContainer.width() );
 
   // create the error msg div
   jQuery('body').append( SmurfyApp.errorTemplate() );
@@ -392,7 +432,7 @@ SmurfyApp.errorTemplate = _.template('<div class="dsmd-expander-errormsg dsmd-hi
 
 SmurfyApp.mechDataView = _.template(' \
   <div class="dsmd-panel-container <%= compactClass %>"> \
-    <span class="dsmd-mech-image <%= compactClass %>"> \
+    <span class="dsmd-mech-image <%= imgVisibilityClass %>"> \
       <img src="<%= imgSrc %>"> \
     </span> \
     <div class="dsmd-panel <%= compactClass %>"> \

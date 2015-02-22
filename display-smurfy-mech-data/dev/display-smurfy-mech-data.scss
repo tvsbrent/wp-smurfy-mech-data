@@ -2,6 +2,7 @@
 
 $box-sizing: content-box;
 $height-img: 200px;
+$width-img: 180px;
 $height-status-footer: 14px;
 $item-font-size: 12px;
 $padding-container: 5px;
@@ -12,6 +13,7 @@ $container-width-max: 760px;
 $container-width-min: 200px;
 $panel-width-min: 170px;
 $shared-backgroundcolor: #303030;
+$default-border-radius: 3px;
 
 .dsmd-container {
   box-sizing: $box-sizing;
@@ -19,9 +21,10 @@ $shared-backgroundcolor: #303030;
   max-width: $container-width-max;
   min-width: $container-width-min;
   height: $size-collapsed;
-  border: 1px solid black;
-  border-radius: 3px;
   padding: $padding-container;
+  border: 1px solid black;
+  border-radius: $default-border-radius;
+  margin: 1px;
   overflow: hidden;
 
   &.dsmd-animation {
@@ -111,10 +114,12 @@ $shared-backgroundcolor: #303030;
 
 .dsmd-expander-errormsg {
   position: absolute;
+  top: 0;
+  left: 0;
   background: #FFF;
-  z-index: 10;
+  z-index: -10;
   border: 1px solid black;
-  border-radius: 3px;
+  border-radius: $default-border-radius;
   box-shadow: 3px 3px 3px;
   padding: 3px;
   width: 150px;
@@ -125,20 +130,27 @@ $shared-backgroundcolor: #303030;
 .dsmd-mech-image {
   box-sizing: $box-sizing;
   height: $height-img;
+  max-width: $width-img;
   position: absolute;
-  right: $padding-container;
+  right: 15px;
   top: $size-expanded - $height-img - $height-status-footer - $padding-container;
   //top: $size-collapsed + $padding-container + 4px;
   img {
     display: block;
     width: auto;
-    height: 100%;
+    height: auto;
     margin: 0 auto;
   }
 
   &.dsmd-compact{
-    display: none !important;
-    visibility: hidden;
+    opacity: 0.4;
+    filter: alpha(opacity=40);
+    right: 0;
+    left: 0;
+    width: 100%;
+    margin: auto;
+    //display: none !important;
+    //visibility: hidden;
   }
 }
 
@@ -182,7 +194,7 @@ $shared-backgroundcolor: #303030;
         font-weight: bold;
         margin-top: 3px;
         margin-bottom: 3px;
-        border-radius: 3px;
+        border-radius: $default-border-radius;
       }
     }
   }
@@ -207,7 +219,11 @@ $shared-backgroundcolor: #303030;
   white-space: nowrap;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #999;
-  border-radius: 3px;
+  border-radius: $default-border-radius;
+
+  &.dsmd-label-left {
+    float: left !important;
+  }
 }
 
 .dsmd-label-warning {
@@ -267,7 +283,7 @@ $shared-backgroundcolor: #303030;
   color: #fff;
   padding: 5px;
   font-size: 12px;
-  border-radius: 2px;
+  border-radius: $default-border-radius;
 
   &.dsmd-compact {
     display: none;
@@ -280,11 +296,12 @@ $shared-backgroundcolor: #303030;
 
 .dsmd-visible {
   opacity: 1 !important;
+  @include transition(opacity 0.15s linear);
 }
 
 .dsmd-hidden {
   opacity: 0;
-  @include transition(opacity 0.2s linear);
+  @include transition(opacity 0.15s linear);
 }
 
 @include keyframes(dsmd-expander-loading-rotate) {
