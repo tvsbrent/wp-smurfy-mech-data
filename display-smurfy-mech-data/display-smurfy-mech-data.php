@@ -1,12 +1,14 @@
-<?php
+﻿<?php
 /**
- * @package Smurfy_Mech_Data
+ * @package Display_Smurfy_Mech_Data
  * @version 1.0
  */
 /*
 Plugin Name: Display Smurfy Mech Data
-Author: Brent Schmidt
+Plugin URI: https://github.com/tvsbrent/wp-smurfy-mech-data
+Description: Adds support for dropdown tooltips to anchors linked to Smurfy builds
 Version: 1.0
+Author: Brent Schmidt
 */
 
 namespace SmurfyMechData;
@@ -46,7 +48,7 @@ class SmurfyLink
   public $linkText = '';
   // The start and end values are from the positions where this link's
   // information was found in the unmodified contents. After the content
-  // variable are modified, these values are meaningless.
+  // variable is modified, these values are incorrect.
   public $startPosition = 0;
   public $endPosition = 0;
 }
