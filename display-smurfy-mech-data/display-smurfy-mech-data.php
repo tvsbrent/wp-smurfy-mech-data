@@ -13,6 +13,12 @@ Author: Brent Schmidt
 
 namespace DisplaySmurfyMechData;
 
+// DON'T SHIP WITH THIS!
+include('ChromePhp.php');
+
+const ENDPOINT_ALL = 'display-smurfy-mech-data-all';
+const ENDPOINT_LOADOUT = 'display-smurfy-mech-data-loadout';
+
 /* ADD SCRIPTS */
 add_action( 'init', 'DisplaySmurfyMechData\\AddScripts' );
 function AddScripts()
@@ -23,6 +29,8 @@ function AddScripts()
     wp_register_script('display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.js', __FILE__ ), array('jquery'), '1.0', true );
     wp_enqueue_script('display-smurfy-mech-data');
   }
+  
+  AddEndPoints();
 }
 
 /* ADD STYLES */
@@ -34,6 +42,107 @@ function AddStyles()
     wp_register_style( 'display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.css', __FILE__ ), array(), '1.0', 'all' );
     wp_enqueue_style( 'display-smurfy-mech-data' );
   }
+}
+
+/* REDIRECT */
+// This will handle retrieving the JSON data from Smurfy's site.
+function AddEndPoints()
+{
+  add_rewrite_endpoint(ENDPOINT_ALL,      EP_ALL);
+  add_rewrite_endpoint(ENDPOINT_LOADOUT,  EP_ALL);
+}
+
+function ActivateEndPoints() {
+  // ensure our endpoint is added before flushing rewrite rules
+  AddEndPoints();
+  // flush rewrite rules - only do this on activation as anything more frequent is bad!
+  flush_rewrite_rules();
+}
+register_activation_hook( __FILE__, 'DisplaySmurfyMechData\\EndPointsActivate' );
+
+function DeactivateEndPoints() {
+  // flush rules on deactivate as well so they're not left hanging around uselessly
+  flush_rewrite_rules();
+}
+register_deactivation_hook( __FILE__, 'DisplaySmurfyMechData\\EndPointsDeactivate' );
+
+add_action('template_redirect', 'DisplaySmurfyMechData\\MechDataEndPoint');
+function MechDataEndPoint()
+{
+  global $wp_query;
+  
+  $queryVar = '';
+  if( isset( $wp_query->query_vars[ENDPOINT_ALL] ) )
+  {
+    $queryVar = ENDPOINT_ALL;
+  }
+  else if( isset( $wp_query->query_vars[ENDPOINT_LOADOUT] ) )
+  {
+    $queryVar = ENDPOINT_LOADOUT;
+  }
+  else
+  {
+    // Not a request for us.
+    return; 
+  }
+   
+  // Format of the query is chassis:loadout
+  $queryElements = explode(':', $wp_query->query_vars[$queryVar]);
+  if( count( $queryElements ) != 2 )
+  {
+    header($_SERVER["SERVER_PROTOCOL"]." 400 Bad Request");
+    exit;
+  }
+ 
+  $returnJSON = new \stdClass;
+  // Get the chassis data, if necessary.
+  if( $queryVar == ENDPOINT_ALL )
+  {
+    $returnJSON->chassis = new \stdClass;
+    if( !GetJSON( sprintf( 'http://mwo.smurfy-net.de/api/data/mechs/%s.json', $queryElements[0] ), $returnJSON->chassis ) )
+    {
+      header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+      exit;
+    }
+  }
+  
+  // Now get the loadout.
+  $returnJSON->loadout = new \stdClass;
+  if( !GetJSON( sprintf( 'http://mwo.smurfy-net.de/api/data/mechs/%s/loadouts/%s.json', $queryElements[0], $queryElements[1] ), $returnJSON->loadout ) )
+  {
+    header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+    exit;
+  }
+  
+  header( 'Content-Type: application/json' );
+  echo json_encode( $returnJSON );
+  exit;
+}
+
+
+function GetJSON( $url, &$json )
+{
+  try {
+    //  Initiate curl
+    $ch = curl_init();
+    // Disable SSL verification
+    curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+    // Will return the response, if false it print the response
+    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+    // Set the url
+    curl_setopt( $ch, CURLOPT_URL, $url );
+    // Execute
+    $result = curl_exec( $ch );
+    // Closing
+    curl_close( $ch );
+
+    $json = json_decode( $result, true );
+    
+    return true;
+  }
+  catch( Exception $ex ) {
+    return false;
+  } 
 }
 
 /* THE CONTENT */
