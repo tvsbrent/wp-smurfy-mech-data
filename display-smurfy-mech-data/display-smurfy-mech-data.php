@@ -13,9 +13,6 @@ Author: Brent Schmidt
 
 namespace DisplaySmurfyMechData;
 
-// DON'T SHIP WITH THIS!
-include('ChromePhp.php');
-
 const ENDPOINT_ALL = 'display-smurfy-mech-data-all';
 const ENDPOINT_LOADOUT = 'display-smurfy-mech-data-loadout';
 
@@ -219,8 +216,10 @@ function FindSmurfyLinks( $content )
   $smurfyLinks = array();
   $positionCurrent = 0;
   
-  $targetAnchor = '<a href="http://mwo.smurfy-net.de/mechlab#i=';
+  $targetAnchor = 'href="http://mwo.smurfy-net.de/mechlab#i=';
   $targetAnchorLen = strlen( $targetAnchor );
+  
+  $contentLen = strLen( $content );
   
   while( true )
   {
@@ -241,8 +240,11 @@ function FindSmurfyLinks( $content )
     }
     
     // Start building the link, store off the start position.
+    // However, we need to store off the beginning of the anchor.
+    // Above, we only found the position of the "href" attribute
+    // of the anchor.
     $smurfyLinkEntry = new SmurfyLink();
-    $smurfyLinkEntry->startPosition = $positionCurrent;
+    $smurfyLinkEntry->startPosition = strrpos( $content, "<a", ( $contentLen - $positionCurrent ) * -1 );
     
     // Get the chassis now.
     $smurfyLinkEntry->chassisID = substr( $content, $positionCurrent + $targetAnchorLen, $positionCursor - $positionCurrent - $targetAnchorLen );

@@ -28,7 +28,7 @@ $default-border-radius: 3px;
   overflow: hidden;
 
   &.dsmd-animation {
-    @include transition( height 0.3s linear );
+    @include transition( height 0.4s linear );
   }
 
   &.dsmd-expanded {

@@ -10,9 +10,9 @@
   margin: 1px;
   overflow: hidden; }
   .dsmd-container.dsmd-animation {
-    -webkit-transition: height 0.3s linear;
-    -moz-transition: height 0.3s linear;
-    transition: height 0.3s linear; }
+    -webkit-transition: height 0.4s linear;
+    -moz-transition: height 0.4s linear;
+    transition: height 0.4s linear; }
   .dsmd-container.dsmd-expanded {
     height: 280px; }
 

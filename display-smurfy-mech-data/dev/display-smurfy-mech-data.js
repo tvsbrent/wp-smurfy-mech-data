@@ -1,9 +1,5 @@
-// OPEN ISSUES: HANDLING SMALLER CONTAINER SIZES.
-// - Hide image earlier than switching to compact mode.
-
 var SmurfyApp = {
-  urlBase: 'https://smurfyservlet.herokuapp.com/',
-  //urlBase: 'http://mwo.smurfy-net.de/',
+  urlBase: window.location.href,
   cachedChassis : {},
   cachedLoadouts : {},
   isCompact : false,
@@ -14,13 +10,16 @@ var SmurfyApp = {
     this.type           = 'GET';
     this.async          = true;
     this.contentType    = "application/json";
-    this.dataType       = 'jsonp';
-    this.jsonpCallback  = 'callback';
+    this.dataType       = 'json';
   },
   DataID : function( chassisID, loadoutID )
   {
     this.chassis = chassisID;
     this.loadout = loadoutID;
+  },
+  errorMessage : {
+    currentExpander : null,
+    currentTimeOut : 0
   },
   ExpanderBaseClass : 'dsmd-expander',
   ExpanderStateClasses : {
@@ -36,12 +35,12 @@ SmurfyApp.DataID.prototype.key = function (){
   return this.chassis + ":" + this.loadout;
 };
 
-SmurfyApp.DataID.prototype.chassisURL = function(){
-  return SmurfyApp.urlBase + "api/data/mechs/" + this.chassis + ".json";
+SmurfyApp.DataID.prototype.allURL = function(){
+  return SmurfyApp.urlBase + "display-smurfy-mech-data-all=" + this.chassis + ":" + this.loadout;
 };
 
 SmurfyApp.DataID.prototype.loadoutURL = function(){
-  return SmurfyApp.urlBase + "api/data/mechs/" + this.chassis + "/loadouts/" + this.loadout + ".json";
+  return SmurfyApp.urlBase + "display-smurfy-mech-data-loadout=" + this.chassis + ":" + this.loadout;
 };
 
 SmurfyApp.roundValue = function( value ) {
@@ -92,6 +91,43 @@ SmurfyApp.handleError = function( expander, errorMsg ) {
   SmurfyApp.showExpanderError( expander );
 };
 
+SmurfyApp.showExpanderError = function( expander ) {
+  var expanderOffset = expander.offset();
+
+  // Clear any current timeouts.
+  window.clearTimeout( SmurfyApp.errorMessage.currentTimeOut );
+
+  if( SmurfyApp.errorMessage.currentExpander !== expander ) {
+    SmurfyApp.errorMessage
+      .text( expander.data( 'error-msg' ) )
+      .currentExpander = expander;
+    SmurfyApp.positionExpanderError( expander );
+  }
+
+  SmurfyApp.errorMessage
+    .css( { "z-index": 10 } )
+    .addClass( 'dsmd-visible' );
+};
+
+SmurfyApp.hideExpanderError = function() {
+  SmurfyApp.errorMessage
+    .removeClass( 'dsmd-visible' )
+    .currentTimeOut = window.setTimeout( function() {
+      SmurfyApp.errorMessage
+        .css( { "z-index": -10 } )
+        .currentExpander = null;
+    }, 250 );
+};
+
+SmurfyApp.positionExpanderError = function( expander ) {
+  var expanderOffset = expander.offset();
+
+  SmurfyApp.errorMessage.css( {
+    top: expanderOffset.top + ( expander.height() * 2 ),
+    left: expanderOffset.left + expander.width() - SmurfyApp.errorMessage.width()
+  } );
+};
+
 SmurfyApp.handleResizeComplete = function() {
   var isFirst = true;
   var updateImageVisibilityState = false;
@@ -101,9 +137,11 @@ SmurfyApp.handleResizeComplete = function() {
     if( isFirst ) {
       isFirst = false;
       // Just check one container's width, they'll all be this size.
-      var containerWidth = jQuery(this).width();
+      var containerWidth = jQuery( this ).width();
+
       updateImageVisibilityState = SmurfyApp.updateImageVisibilityState( containerWidth );
       updateCompactState = SmurfyApp.updateCompactState( containerWidth );
+
       if( !updateImageVisibilityState && !updateCompactState ) {
         // The compact state didn't change, so leave.
         // Returning false breaks the each loop.
@@ -111,10 +149,15 @@ SmurfyApp.handleResizeComplete = function() {
       }
     }
     jQuery(this).children('.dsmd-panel-container' ).each( function() {
-      SmurfyApp.resizePanelContainerElements( jQuery(this), updateImageVisibilityState, updateCompactState );
-    });
-  });
+      SmurfyApp.resizePanelContainerElements( jQuery( this ), updateImageVisibilityState, updateCompactState );
+    } );
+  } );
 
+  if( SmurfyApp.errorMessage.currentExpander !== null ) {
+    SmurfyApp.positionExpanderError( SmurfyApp.errorMessage.currentExpander );
+  } else {
+    SmurfyApp.errorMessage.css( { top: 0, left: 0 } );
+  }
 };
 
 SmurfyApp.updateImageVisibilityState = function( containerWidth ) {
@@ -167,30 +210,6 @@ SmurfyApp.resizePanelContainerElements = function( panelContainer, updateImageVi
   }
 };
 
-SmurfyApp.showExpanderError = function( expander ) {
-  var expanderPos = expander.position();
-  var expanderOffset = expander.offset();
-  var errmsg = jQuery( '.dsmd-expander-errormsg' );
-  errmsg
-    .css( {
-      top: expanderOffset.top + ( expander.height() * 2 ),
-      left: expanderOffset.left + expander.width() - errmsg.width(),
-      "z-index": 10 } )
-    .text( expander.data( 'error-msg' ) )
-    .addClass( 'dsmd-visible' );
-};
-
-SmurfyApp.hideExpanderError = function() {
-  var errorMsg = jQuery( '.dsmd-expander-errormsg' );
-  errorMsg.removeClass( 'dsmd-visible' );
-  window.setTimeout( function() {
-    errorMsg.css( {
-      top: 0,
-      left: 0,
-      "z-index": -10 } );
-  }, 250 );
-};
-
 SmurfyApp.getMechData = function( container, expander ) {
   try {
     var dataID = new SmurfyApp.DataID();
@@ -209,33 +228,28 @@ SmurfyApp.getMechData = function( container, expander ) {
     }
 
     // See if we cached the chassis data already.
-    if( !SmurfyApp.cachedChassis.hasOwnProperty( dataID.chassis ) )
-    {
-      jQuery.ajax( new SmurfyApp.AjaxSettings( dataID.chassisURL() ) )
+    if( !SmurfyApp.cachedChassis.hasOwnProperty( dataID.chassis ) ) {
+      // We need to get all the data, chassis and loadout.
+      jQuery.ajax( new SmurfyApp.AjaxSettings( dataID.allURL() ) )
         .done( function( response, textStatus, jqXHR ) {
-          SmurfyApp.cachedChassis[dataID.chassis] = response;
-          container.trigger( 'chassisDataReady' );
+          SmurfyApp.cachedChassis[dataID.chassis] = response.chassis;
+          SmurfyApp.cachedLoadouts[dataID.key()] = response.loadout;
+          container.trigger( 'dataReady' );
+        } )
+        .fail( function( jqXHR, textStatus, errorThrown ) {
+          SmurfyApp.handleError( expander, 'Failed to retrieve chassis and loadout data.' );
+        } );
+    } else if( !SmurfyApp.cachedLoadouts.hasOwnProperty( dataID.key() ) ) {
+      jQuery.ajax( new SmurfyApp.AjaxSettings( dataID.loadoutURL() ) )
+        .done( function( response ) {
+          SmurfyApp.cachedLoadouts[dataID.key()] = response.loadout;
+          container.trigger( 'dataReady' );
         } )
         .fail( function () {
-          SmurfyApp.handleError( expander, 'Failed to retrieve chassis data.' );
-        });
+          SmurfyApp.handleError( expander, 'Failed to retrieve loadout data.' );
+        } );
     } else {
-      container.trigger( 'chassisDataReady' );
-    }
-
-    if( !SmurfyApp.cachedLoadouts.hasOwnProperty( dataID.key() ) ){
-      // Wait for the chassis data to load.
-      container.on( 'chassisDataReady', function() {
-        container.off( 'chassisDataReady');
-        jQuery.ajax( new SmurfyApp.AjaxSettings( dataID.loadoutURL() ) )
-          .done( function( response ) {
-            SmurfyApp.cachedLoadouts[dataID.key()] = response;
-            container.trigger('dataReady');
-          } )
-          .fail( function () {
-            SmurfyApp.handleError( expander, 'Failed to retrieve loadout data.' );
-          } );
-      } );
+      container.trigger( 'dataReady' );
     }
   } catch ( errorMsg ) {
     SmurfyApp.handleError( expander, errorMsg );
@@ -340,9 +354,13 @@ SmurfyApp.buildMechDataView = function( container, dataID ) {
 
   container
     .append( SmurfyApp.mechDataView( displayData ) )
-    .attr( 'data-built-view', true )
-    .delay( 0.4 )
-    .trigger( 'viewBuilt' );
+    .attr( 'data-built-view', true );
+
+  // We'll wait a moment to give the DOM time to build
+  // all the elements.
+  window.setTimeout( function() {
+    container.trigger('viewBuilt');
+  }, 250 );
 };
 
 SmurfyApp.expanderClickHandler = function() {
@@ -386,17 +404,27 @@ jQuery( document ).ready( function() {
   SmurfyApp.updateImageVisibilityState( singleContainer.width() );
   SmurfyApp.updateCompactState( singleContainer.width() );
 
+  var urlBaseOverride = jQuery('body' ).attr('data-url-base');
+  if( urlBaseOverride !== undefined ) {
+    SmurfyApp.urlBase = urlBaseOverride;
+  }
+
+  if( SmurfyApp.urlBase.indexOf('?') !== -1 ) {
+    SmurfyApp.urlBase = SmurfyApp.urlBase + '&';
+  } else {
+    SmurfyApp.urlBase = SmurfyApp.urlBase + '?';
+  }
+
   // create the error msg div
   jQuery('body').append( SmurfyApp.errorTemplate() );
+  SmurfyApp.errorMessage = jQuery.extend( SmurfyApp.errorMessage, jQuery( '#dsmd-expander-error') );
 
   // Setup the container event handlers
   jQuery( '.dsmd-container' )
     .on( 'toggleState', function() {
       var container = jQuery( this );
       container.toggleClass( 'dsmd-expanded' );
-      if( !SmurfyApp.Modernizr.csstransitions ||
-          !container.hasClass( 'dsmd-animation' ) )
-      {
+      if( !SmurfyApp.Modernizr.csstransitions || !container.hasClass( 'dsmd-animation' ) ) {
         container.trigger( 'transitionend' );
       }
     } )
@@ -404,8 +432,7 @@ jQuery( document ).ready( function() {
       var container = jQuery(this);
       var expander = container.find( '.dsmd-expander' );
       if( SmurfyApp.hasExpanderStateClasses( expander, 'loading' ) ||
-          SmurfyApp.hasExpanderStateClasses( expander, 'open' ) )
-      {
+          SmurfyApp.hasExpanderStateClasses( expander, 'open' ) ) {
         SmurfyApp.setExpanderState( expander, 'close');
       } else {
         SmurfyApp.setExpanderState( expander, 'open');
@@ -428,7 +455,7 @@ jQuery( document ).ready( function() {
 //////////////////////////////////////////////////////////////
 // TEMPLATES
 
-SmurfyApp.errorTemplate = _.template('<div class="dsmd-expander-errormsg dsmd-hidden"></div>');
+SmurfyApp.errorTemplate = _.template('<div id="dsmd-expander-error" class="dsmd-expander-errormsg dsmd-hidden"></div>');
 
 SmurfyApp.mechDataView = _.template(' \
   <div class="dsmd-panel-container <%= compactClass %>"> \
