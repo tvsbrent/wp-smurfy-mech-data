@@ -190,10 +190,10 @@ SmurfyApp.handleResizeComplete = function() {
 };
 
 SmurfyApp.updateImageFadedState = function( containerWidth ) {
-  if( containerWidth >= 695 && SmurfyApp.isImageFaded ) {
+  if( containerWidth >= 715 && SmurfyApp.isImageFaded ) {
     SmurfyApp.isImageFaded = false;
     return true;
-  } else if ( containerWidth < 695 && !SmurfyApp.isImageFaded ) {
+  } else if ( containerWidth < 715 && !SmurfyApp.isImageFaded ) {
     SmurfyApp.isImageFaded = true;
     return true;
   }
@@ -227,12 +227,10 @@ SmurfyApp.resizePanelContainerElements = function( panelContainer, updatedImageF
   if( updateCompactState ) {
     if( SmurfyApp.isCompact ) {
       panelContainer
-        .addClass('dsmd-compact')
         .children(':not(.dsmd-mech-image)')
           .addClass('dsmd-compact');
     } else {
       panelContainer
-        .removeClass('dsmd-compact')
         .children(':not(.dsmd-mech-image)')
           .removeClass('dsmd-compact');
     }
@@ -291,15 +289,19 @@ SmurfyApp.buildMechDataView = function( container, dataID ) {
 
   // Iterate over the armaments and add type
   _.each( loadoutData.stats.armaments, function(armament) {
-    if( !armament.hasOwnProperty('weapon_type') ) {
-      armament.weapon_type = SmurfyApp.mechItemDetails[armament.id].weapon_type || 'unknown';
+    if( !armament.hasOwnProperty( 'weapon_type' ) &&
+        SmurfyApp.mechItemDetails.hasOwnProperty( armament.id ) ) {
+      armament.weapon_type = SmurfyApp.mechItemDetails[armament.id].weapon_type;
+    } else {
+      armament.weapon_type = 'unknown';
     }
   } );
 
   // Iterate over the ammuntion and add num shots
   _.each( loadoutData.stats.ammunition, function( ammo ){
-    if( !ammo.hasOwnProperty('num_shots') ) {
-      ammo.num_shots = (SmurfyApp.mechItemDetails[ammo.id].num_shots || 0) * ammo.count;
+    if( !ammo.hasOwnProperty( 'num_shots' ) &&
+        SmurfyApp.mechItemDetails.hasOwnProperty( ammo.id ) ) {
+      ammo.num_shots = ( SmurfyApp.mechItemDetails[ammo.id].num_shots || 0 ) * ammo.count;
     }
   } );
 
@@ -533,7 +535,7 @@ SmurfyApp.mechDataView = _.template(' \
               <li>Jump Jets: <span class="dsmd-label dsmd-label-info"><%= jumpJets %> of <%= jumpJetsMax %></span></li> \
         <%  } %> \
         <%  if( hasElectronics === true ) { %> \
-        <li class="dsmd-li-title">Electronic Systems</li> \
+            <li class="dsmd-li-title">Electronic Systems</li> \
         <%  } %> \
         <%  if( ecmInstalled === true ) { %> \
               <li>&nbsp;<span class="dsmd-label dsmd-label-left dsmd-label-info">ECM</span></li> \

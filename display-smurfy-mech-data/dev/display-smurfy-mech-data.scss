@@ -9,11 +9,12 @@ $padding-container: 5px;
 $size-arrow: 10px;
 $size-collapsed: 25px;
 $size-expanded: 280px;
-$container-width-max: 760px;
+$container-width-max: 780px;
 $container-width-min: 200px;
 $panel-width-min: 180px;
 $shared-backgroundcolor: #303030;
 $default-border-radius: 3px;
+$size-scrollbar: 25px;
 
 .dsmd-container {
   box-sizing: $box-sizing;
@@ -131,8 +132,8 @@ $default-border-radius: 3px;
   height: $height-img;
   max-width: $width-img;
   position: absolute;
-  right: 15px;
-  top: $size-expanded - $height-img - $height-status-footer - $padding-container;
+  right: 15px + $size-scrollbar;
+  top: $size-expanded - $height-img - $padding-container;
   //top: $size-collapsed + $padding-container + 4px;
   img {
     display: block;
@@ -158,11 +159,15 @@ $default-border-radius: 3px;
   margin: 0;
   padding: 0;
   height: $size-expanded - 38;
-  overflow: hidden;
+  //overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 
+  /*
   &.dsmd-compact{
     overflow-y: visible !important;
   }
+  */
 }
 
 .dsmd-panel {
@@ -215,14 +220,14 @@ $default-border-radius: 3px;
   line-height: $item-font-size;
   color: #fff;
   vertical-align: baseline;
-  //horiz-align: right;
   white-space: nowrap;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #999;
   border-radius: $default-border-radius;
 
   &.dsmd-label-left {
-    float: left !important;
+    left: 2px;
+    right: auto;
   }
 }
 
@@ -276,7 +281,7 @@ $default-border-radius: 3px;
   position: absolute;
   line-height: $height-status-footer;
   top: $size-expanded - $height-status-footer - $padding-container;
-  right: $padding-container;
+  left: $padding-container;
   z-index: 1;
   width: auto;
   background: $shared-backgroundcolor;
