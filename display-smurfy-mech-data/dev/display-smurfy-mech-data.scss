@@ -11,7 +11,7 @@ $size-collapsed: 25px;
 $size-expanded: 280px;
 $container-width-max: 760px;
 $container-width-min: 200px;
-$panel-width-min: 170px;
+$panel-width-min: 180px;
 $shared-backgroundcolor: #303030;
 $default-border-radius: 3px;
 
@@ -85,8 +85,7 @@ $default-border-radius: 3px;
     border-bottom: $size-arrow solid $shared-backgroundcolor;
   }
 
-  &.dsmd-expander-arrow-down {
-    border-left: $size-arrow solid transparent;
+  &.dsmd-expander-arrow-down { border-left: $size-arrow solid transparent;
     border-right: $size-arrow solid transparent;
     border-top: $size-arrow solid $shared-backgroundcolor;
   }
@@ -201,13 +200,14 @@ $default-border-radius: 3px;
 
   &.dsmd-compact {
     display: block !important;
+    max-width: inherit;
   }
 }
 
 .dsmd-label {
   display: inline-block;
-  position: relative;
-  float: right;
+  position: absolute;
+  right: 2px;
   padding: 2px 4px;
   margin: -2px 2px 0 2px;
   font-size: $item-font-size;
@@ -215,7 +215,7 @@ $default-border-radius: 3px;
   line-height: $item-font-size;
   color: #fff;
   vertical-align: baseline;
-  horiz-align: right;
+  //horiz-align: right;
   white-space: nowrap;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #999;

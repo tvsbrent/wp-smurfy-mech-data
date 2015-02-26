@@ -127,7 +127,7 @@
   vertical-align: top;
   display: inline-block;
   margin: 0 3px 0 3px;
-  min-width: 170px; }
+  min-width: 180px; }
   .dsmd-panel ul {
     list-style: none;
     padding: 0;
@@ -147,12 +147,13 @@
         margin-bottom: 3px;
         border-radius: 3px; }
   .dsmd-panel.dsmd-compact {
-    display: block !important; }
+    display: block !important;
+    max-width: inherit; }
 
 .dsmd-label {
   display: inline-block;
-  position: relative;
-  float: right;
+  position: absolute;
+  right: 2px;
   padding: 2px 4px;
   margin: -2px 2px 0 2px;
   font-size: 12px;
@@ -160,7 +161,6 @@
   line-height: 12px;
   color: #fff;
   vertical-align: baseline;
-  horiz-align: right;
   white-space: nowrap;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #999;

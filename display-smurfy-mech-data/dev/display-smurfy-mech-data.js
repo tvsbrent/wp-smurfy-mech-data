@@ -3,7 +3,7 @@ var SmurfyApp = {
   cachedChassis : {},
   cachedLoadouts : {},
   isCompact : false,
-  isImageVisible : true,
+  isImageFaded : false,
   AjaxSettings : function( url ) {
     this.url            = url;
     this.timeout        = 7500;
@@ -36,21 +36,50 @@ SmurfyApp.DataID.prototype.key = function (){
 };
 
 SmurfyApp.DataID.prototype.allURL = function(){
-  return SmurfyApp.urlBase + "display-smurfy-mech-data-all=" + this.chassis + ":" + this.loadout;
+  return SmurfyApp.urlBase + "?display-smurfy-mech-data-all=" + this.chassis + ":" + this.loadout;
 };
 
 SmurfyApp.DataID.prototype.loadoutURL = function(){
-  return SmurfyApp.urlBase + "display-smurfy-mech-data-loadout=" + this.chassis + ":" + this.loadout;
+  return SmurfyApp.urlBase + "?display-smurfy-mech-data-loadout=" + this.chassis + ":" + this.loadout;
 };
 
 SmurfyApp.roundValue = function( value ) {
   return Math.round((value + 0.00001) * 100) / 100;
 };
 
-SmurfyApp.parseCreateDate = function ( createDate ) {
+SmurfyApp.parseCreateDate = function( createDate ) {
   // 2014-11-29T03:07:35+000
   var s = (createDate.substr( 0, createDate.indexOf('T') )).split('-');
   return SmurfyApp.Months[ s[1] - 1 ] + " " + s[2] + ", " + s[0];
+};
+
+SmurfyApp.parseUri = function( str ) {
+  var	o   = SmurfyApp.parseUri.options,
+      m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+      uri = {},
+      i   = 14;
+
+  while (i--) uri[o.key[i]] = m[i] || "";
+
+  uri[o.q.name] = {};
+  uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+    if ($1) uri[o.q.name][$1] = $2;
+  });
+
+  return uri;
+};
+
+SmurfyApp.parseUri.options = {
+  strictMode: false,
+  key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+  q:   {
+    name:   "queryKey",
+    parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+  },
+  parser: {
+    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+    loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+  }
 };
 
 SmurfyApp.getURLParameter = function ( url, name ) {
@@ -130,7 +159,7 @@ SmurfyApp.positionExpanderError = function( expander ) {
 
 SmurfyApp.handleResizeComplete = function() {
   var isFirst = true;
-  var updateImageVisibilityState = false;
+  var updatedImageFadedState = false;
   var updateCompactState = false;
 
   jQuery('.dsmd-container').each( function() {
@@ -139,17 +168,17 @@ SmurfyApp.handleResizeComplete = function() {
       // Just check one container's width, they'll all be this size.
       var containerWidth = jQuery( this ).width();
 
-      updateImageVisibilityState = SmurfyApp.updateImageVisibilityState( containerWidth );
+      updatedImageFadedState = SmurfyApp.updateImageFadedState( containerWidth );
       updateCompactState = SmurfyApp.updateCompactState( containerWidth );
 
-      if( !updateImageVisibilityState && !updateCompactState ) {
+      if( !updatedImageFadedState && !updateCompactState ) {
         // The compact state didn't change, so leave.
         // Returning false breaks the each loop.
         return false;
       }
     }
     jQuery(this).children('.dsmd-panel-container' ).each( function() {
-      SmurfyApp.resizePanelContainerElements( jQuery( this ), updateImageVisibilityState, updateCompactState );
+      SmurfyApp.resizePanelContainerElements( jQuery( this ), updatedImageFadedState, updateCompactState );
     } );
   } );
 
@@ -160,12 +189,12 @@ SmurfyApp.handleResizeComplete = function() {
   }
 };
 
-SmurfyApp.updateImageVisibilityState = function( containerWidth ) {
-  if( containerWidth < 695 && SmurfyApp.isImageVisible ) {
-    SmurfyApp.isImageVisible = false;
+SmurfyApp.updateImageFadedState = function( containerWidth ) {
+  if( containerWidth >= 695 && SmurfyApp.isImageFaded ) {
+    SmurfyApp.isImageFaded = false;
     return true;
-  } else if ( containerWidth >= 695 && !SmurfyApp.isImageVisible ) {
-    SmurfyApp.isImageVisible = true;
+  } else if ( containerWidth < 695 && !SmurfyApp.isImageFaded ) {
+    SmurfyApp.isImageFaded = true;
     return true;
   }
   return false;
@@ -184,9 +213,9 @@ SmurfyApp.updateCompactState = function( containerWidth ){
   return false;
 };
 
-SmurfyApp.resizePanelContainerElements = function( panelContainer, updateImageVisibilityState, updateCompactState ) {
-  if( updateImageVisibilityState ) {
-    if( !SmurfyApp.isImageVisible ) {
+SmurfyApp.resizePanelContainerElements = function( panelContainer, updatedImageFadedState, updateCompactState ) {
+  if( updatedImageFadedState ) {
+    if( SmurfyApp.isImageFaded ) {
       panelContainer.children('.dsmd-mech-image')
         .addClass('dsmd-compact');
     } else {
@@ -323,7 +352,7 @@ SmurfyApp.buildMechDataView = function( container, dataID ) {
 
   var displayData = {
     compactClass        : SmurfyApp.isCompact ? 'dsmd-compact' : '',
-    imgVisibilityClass  : !SmurfyApp.isImageVisible ? 'dsmd-compact' : '',
+    imgVisibilityClass  : SmurfyApp.isImageFaded ? 'dsmd-compact' : '',
     imgSrc              : 'http://mwo.smurfy-net.de/assetic/img/tt_image/' + chassisData.name + '.png',
     shortName           : chassisData.translated_short_name,
     isStock             : dataID.loadout.toLowerCase() === 'stock',
@@ -392,16 +421,15 @@ SmurfyApp.expanderClickHandler = function() {
 };
 
 jQuery( document ).ready( function() {
-
-  // Grab a single container object. If none exist, then
-  // we'll just leave, as there's nothing to do here.
+  // Grab a single container object. If none exist, then we'll
+  // just leave, as there's nothing on this page for us.
   var singleContainer = jQuery('.dsmd-container').first();
   if( singleContainer.length === 0 ){
     return;
   }
 
-  // Set the initial minimized state.
-  SmurfyApp.updateImageVisibilityState( singleContainer.width() );
+  // Set the initial faded / compact state.
+  SmurfyApp.updateImageFadedState( singleContainer.width() );
   SmurfyApp.updateCompactState( singleContainer.width() );
 
   var urlBaseOverride = jQuery('body' ).attr('data-url-base');
@@ -409,11 +437,10 @@ jQuery( document ).ready( function() {
     SmurfyApp.urlBase = urlBaseOverride;
   }
 
-  if( SmurfyApp.urlBase.indexOf('?') !== -1 ) {
-    SmurfyApp.urlBase = SmurfyApp.urlBase + '&';
-  } else {
-    SmurfyApp.urlBase = SmurfyApp.urlBase + '?';
-  }
+  // Parse the url and pull out only the parts we need,
+  // ignoring any query strings.
+  var uri = SmurfyApp.parseUri( SmurfyApp.urlBase );
+  SmurfyApp.urlBase = uri.protocol + "://" + uri.authority + uri.path + uri.file;
 
   // create the error msg div
   jQuery('body').append( SmurfyApp.errorTemplate() );
@@ -429,7 +456,7 @@ jQuery( document ).ready( function() {
       }
     } )
     .on( 'transitionend', function() {
-      var container = jQuery(this);
+      var container = jQuery( this );
       var expander = container.find( '.dsmd-expander' );
       if( SmurfyApp.hasExpanderStateClasses( expander, 'loading' ) ||
           SmurfyApp.hasExpanderStateClasses( expander, 'open' ) ) {
