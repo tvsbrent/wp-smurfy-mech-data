@@ -8,9 +8,9 @@ A quick request before going further! This is my first WordPress plugin, so ther
 ##How it works:
 The plugin looks for the following markup in any of your posts:
 
-    href="http://mwo.smurfy-net.de/mechlab#i=
+    ~<a href="http://mwo.smurfy-net.de/mechlab#i=
 
-If it finds any such markup, it wraps the anchor element the above text belongs to in some additional HTML. Once the browser receives your page, the JavaScript provided allows user to request info on that mech. Once the browser receives that mech data, the link is "expanded" and a summary of the build is viewable right in your page. 
+**Note the tilde (~) that preceeds the anchor tag.** This is how the plugin determines that you want to embed the build the link points to in your page. If the plugin finds any such markup, it wraps the anchor element in some additional HTML. Once the browser receives your page, the JavaScript provided allows user to request info on that mech. Once the browser receives that mech data, the link is "expanded" and a summary of the build is viewable right in your page. 
 
 ##How to get started:
 
