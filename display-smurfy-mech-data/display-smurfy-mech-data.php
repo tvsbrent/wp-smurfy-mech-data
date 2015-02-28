@@ -243,24 +243,6 @@ function FindSmurfyLinks( $content )
   return $smurfyLinks;
 }
 
-function FindSubstringBetween( $content, $posStart, $strStart, $strEnd, &$outputString )
-{
-  // Get the link text now.
-  $internalStart = strpos( $content, $strStart, $posStart );
-  if( $internalStart === false )
-  {
-    return false;
-  }
-  $internalEnd = strpos( $content, $strEnd, $internalStart );
-  if( $internalEnd === false )
-  {
-    return false;
-  }
-  
-  $outputString = substr( $content, $internalStart + strlen( $strStart ), $internalEnd - $internalStart - strlen( $strStart ) );
-  return $internalEnd + strlen( $strEnd );
-}
-
 function FormatSmurfyLinks( $smurfyLink )
 {
   $body =
