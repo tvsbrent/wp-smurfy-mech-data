@@ -214,58 +214,30 @@ function ModifyContent( $content )
 function FindSmurfyLinks( $content )
 {
   $smurfyLinks = array();
-  $positionCurrent = 0;
   
-  $targetAnchor = 'href="http://mwo.smurfy-net.de/mechlab#i=';
-  $targetAnchorLen = strlen( $targetAnchor );
+  $pattern = "/~<a.*?#i=(\d.*?)&.*?l=(.*?)\".*?>(.*?)<\/a>/";
+  $result = preg_match_all( $pattern, $content, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE );
   
-  $contentLen = strLen( $content );
-  
-  while( true )
+  if( $result !== 0 && $result !== false )
   {
-    $positionCurrent = strpos( $content, $targetAnchor, $positionCurrent );
-    if( $positionCurrent === false )
+    foreach( $matches as $match )
     {
-      // Nothing more to find, leave the loop.
-      break;
+      // Each match in our matches array is a multidimensional array.
+      //   Element 0 is the entire link.
+      //   Element 1 is the chassis ID.
+      //   Element 2 is the loadout ID.
+      //   Element 3 is the link text.
+      // In each element, element 0 is the text, while subelement 1 is
+      // that text's position.
+      $smurfyLinkEntry = new SmurfyLink();
+      $smurfyLinkEntry->link = substr($match[0][0],1);
+      $smurfyLinkEntry->chassisID = $match[1][0];
+      $smurfyLinkEntry->loadoutID = $match[2][0];
+      $smurfyLinkEntry->startPosition = $match[0][1];
+      $smurfyLinkEntry->endPosition = $match[0][1] + strLen( $match[0][0] );
+      
+      $smurfyLinks[] = $smurfyLinkEntry;
     }
-    
-    $positionCursor = strpos( $content, '&', $positionCurrent );
-    if( $positionCursor === false )
-    {
-      // Something no bueno here, move the start position
-      // on and look for another link.
-      $positionCurrent += $targetAnchorLen;
-      continue;
-    }
-    
-    // Start building the link, store off the start position.
-    // However, we need to store off the beginning of the anchor.
-    // Above, we only found the position of the "href" attribute
-    // of the anchor.
-    $smurfyLinkEntry = new SmurfyLink();
-    $smurfyLinkEntry->startPosition = strrpos( $content, "<a", ( $contentLen - $positionCurrent ) * -1 );
-    
-    // Get the chassis now.
-    $smurfyLinkEntry->chassisID = substr( $content, $positionCurrent + $targetAnchorLen, $positionCursor - $positionCurrent - $targetAnchorLen );
-    
-    // On to the loadout.
-    $positionCurrent = FindSubstringBetween( $content, $positionCurrent, 'l=', '"', $smurfyLinkEntry->loadoutID );
-    if( $positionCurrent === false )
-    {
-      continue;
-    }
-    
-    // Get the link text now.
-    $positionCurrent = FindSubstringBetween( $content, $positionCurrent, '>', '</a>', $smurfyLinkEntry->linkText );
-    if( $positionCurrent === false )
-    {
-      continue;
-    }
-    $smurfyLinkEntry->link = htmlspecialchars_decode( substr( $content, $smurfyLinkEntry->startPosition, $positionCurrent - $smurfyLinkEntry->startPosition ) );
-    $smurfyLinkEntry->endPosition = $positionCurrent;
-    
-    $smurfyLinks[] = $smurfyLinkEntry;
   }
   
   return $smurfyLinks;
