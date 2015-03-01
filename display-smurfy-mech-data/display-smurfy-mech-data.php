@@ -119,7 +119,8 @@ function MechDataEndPoint()
 
 function GetJSON( $url, &$json )
 {
-  try {
+  try
+  {
     //  Initiate curl
     $ch = curl_init();
     // Disable SSL verification
@@ -137,7 +138,8 @@ function GetJSON( $url, &$json )
     
     return true;
   }
-  catch( Exception $ex ) {
+  catch( Exception $ex )
+  {
     return false;
   } 
 }
@@ -233,6 +235,7 @@ function FindSmurfyLinks( $content )
       $smurfyLinkEntry->link = substr($match[0][0],1);
       $smurfyLinkEntry->chassisID = $match[1][0];
       $smurfyLinkEntry->loadoutID = $match[2][0];
+      $smurfyLinkEntry->linkText = $match[3][0];
       $smurfyLinkEntry->startPosition = $match[0][1];
       $smurfyLinkEntry->endPosition = $match[0][1] + strLen( $match[0][0] );
       
