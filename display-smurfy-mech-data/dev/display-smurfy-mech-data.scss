@@ -3,14 +3,14 @@
 $box-sizing: content-box;
 $height-img: 200px;
 $width-img: 180px;
-$height-status-footer: 14px;
+$height-footer: 14px;
 $item-font-size: 12px;
 $padding-container: 5px;
 $size-arrow: 10px;
 $size-collapsed: 25px;
-$size-expanded: 280px;
+$size-expanded: 300px;
 $container-width-max: 780px;
-$container-width-min: 200px;
+$container-width-min: 220px;
 $panel-width-min: 180px;
 $shared-backgroundcolor: #303030;
 $default-border-radius: 3px;
@@ -37,7 +37,6 @@ $size-scrollbar: 25px;
   }
 }
 
-
 .dsmd-title {
   box-sizing: $box-sizing;
   font-weight: bold;
@@ -59,7 +58,7 @@ $size-scrollbar: 25px;
   display: inline;
   background-color: transparent;
   position: absolute;
-  top: $size-collapsed /2 ;
+  top: $size-collapsed / 2 ;
   right: $padding-container;
   z-index: 1;
   width: auto;
@@ -125,6 +124,13 @@ $size-scrollbar: 25px;
   width: 150px;
   height: auto;
   font-size: 14px;
+  opacity: 0;
+  @include transition(opacity 0.15s linear);
+}
+
+.dsmd-expander-visible {
+  opacity: 1 !important;
+  @include transition(opacity 0.15s linear);
 }
 
 .dsmd-mech-image {
@@ -133,8 +139,8 @@ $size-scrollbar: 25px;
   max-width: $width-img;
   position: absolute;
   right: 15px + $size-scrollbar;
-  top: $size-expanded - $height-img - $padding-container;
-  //top: $size-collapsed + $padding-container + 4px;
+  //top: $size-expanded - $height-img - $padding-container;
+  top: $size-collapsed + $padding-container + 30px;
   img {
     display: block;
     width: auto;
@@ -154,23 +160,22 @@ $size-scrollbar: 25px;
   }
 }
 
-.dsmd-panel-container {
+.dsmd-panel {
   box-sizing: content-box;
   margin: 0;
   padding: 0;
   height: $size-expanded - 38;
-  //overflow: hidden;
   overflow-x: hidden;
   overflow-y: auto;
 
-  /*
-  &.dsmd-compact{
-    overflow-y: visible !important;
+  &.dsmd-column {
+    display: block;
+    margin: 0 auto;
+    width: 752px;
   }
-  */
 }
 
-.dsmd-panel {
+.dsmd-subpanel {
   box-sizing: $box-sizing;
   position: relative;
   vertical-align: top;
@@ -181,7 +186,7 @@ $size-scrollbar: 25px;
   ul {
     list-style: none;
     padding: 0;
-    margin: 1px 0 1px 0;
+    margin: 0;
 
     li {
       font-style: normal;
@@ -207,6 +212,27 @@ $size-scrollbar: 25px;
     display: block !important;
     max-width: inherit;
   }
+
+  &.dsmd-column {
+    width: 150px;
+    min-width: unset; // Have to override the inherited min-width
+    margin: 0;
+
+    li{
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .dsmd-label {
+      margin: -2px 4px 0 2px;
+    }
+  }
+}
+
+.dsmd-column-cell {
+  border: 1px solid black;
+  border-radius: $default-border-radius;
+  margin: 2px 1px;
 }
 
 .dsmd-label {
@@ -229,6 +255,10 @@ $size-scrollbar: 25px;
     left: 2px;
     right: auto;
   }
+}
+
+.dsmd-compact .dsmd-label {
+  right: 4px;
 }
 
 .dsmd-label-warning {
@@ -279,13 +309,13 @@ $size-scrollbar: 25px;
 .dsmd-status {
   display: inline;
   position: absolute;
-  line-height: $height-status-footer;
-  top: $size-expanded - $height-status-footer - $padding-container;
+  line-height: $height-footer;
+  top: $size-expanded - $height-footer - $padding-container;
   left: $padding-container;
   z-index: 1;
   width: auto;
   background: $shared-backgroundcolor;
-  color: #fff;
+  color: white;
   padding: 5px;
   font-size: 12px;
   border-radius: $default-border-radius;
@@ -299,14 +329,53 @@ $size-scrollbar: 25px;
   }
 }
 
-.dsmd-visible {
-  opacity: 1 !important;
-  @include transition(opacity 0.15s linear);
+.dsmd-view-buttons {
+  display: inline;
+  position: absolute;
+  line-height: $height-footer;
+  top: ( $size-collapsed - $height-footer ) / 2;
+  right: ( $size-arrow + $padding-container ) * 2;
+  z-index: 1;
+  width: auto;
+  padding: 4px 0;
+
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0 2px;
+  }
+
+  li {
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+  }
+
+  a {
+    border-radius: $default-border-radius;
+    background-color: #606060;
+    text-decoration: none;
+    padding: 5px;
+    margin: 0;
+    color: white;
+    font-size: 12px;
+    font-weight: bolder;
+    font-family: Helvetica, Arial, sans-serif;
+
+    &.active {
+      background-color: #3a87ad;
+    }
+  }
+}
+
+.dsmd-faded {
+  opacity: 0 !important;
+  @include transition(opacity 0.05s linear);
 }
 
 .dsmd-hidden {
-  opacity: 0;
-  @include transition(opacity 0.15s linear);
+  display: none !important;
+  visibility: hidden;
 }
 
 @include keyframes(dsmd-expander-loading-rotate) {

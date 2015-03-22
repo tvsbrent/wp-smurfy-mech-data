@@ -2,7 +2,7 @@
   box-sizing: content-box;
   position: relative;
   max-width: 780px;
-  min-width: 200px;
+  min-width: 220px;
   height: 25px;
   padding: 5px;
   border: 1px solid black;
@@ -14,7 +14,7 @@
     -moz-transition: height 0.4s linear;
     transition: height 0.4s linear; }
   .dsmd-container.dsmd-expanded {
-    height: 280px; }
+    height: 300px; }
 
 .dsmd-title {
   box-sizing: content-box;
@@ -90,7 +90,17 @@
   padding: 3px;
   width: 150px;
   height: auto;
-  font-size: 14px; }
+  font-size: 14px;
+  opacity: 0;
+  -webkit-transition: opacity 0.15s linear;
+  -moz-transition: opacity 0.15s linear;
+  transition: opacity 0.15s linear; }
+
+.dsmd-expander-visible {
+  opacity: 1 !important;
+  -webkit-transition: opacity 0.15s linear;
+  -moz-transition: opacity 0.15s linear;
+  transition: opacity 0.15s linear; }
 
 .dsmd-mech-image {
   box-sizing: content-box;
@@ -98,7 +108,7 @@
   max-width: 180px;
   position: absolute;
   right: 40px;
-  top: 75px; }
+  top: 60px; }
   .dsmd-mech-image img {
     display: block;
     width: auto;
@@ -112,37 +122,36 @@
     width: 100%;
     margin: auto; }
 
-.dsmd-panel-container {
+.dsmd-panel {
   box-sizing: content-box;
   margin: 0;
   padding: 0;
-  height: 242px;
+  height: 262px;
   overflow-x: hidden;
-  overflow-y: auto;
-  /*
-  &.dsmd-compact{
-    overflow-y: visible !important;
-  }
-  */ }
+  overflow-y: auto; }
+  .dsmd-panel.dsmd-column {
+    display: block;
+    margin: 0 auto;
+    width: 752px; }
 
-.dsmd-panel {
+.dsmd-subpanel {
   box-sizing: content-box;
   position: relative;
   vertical-align: top;
   display: inline-block;
   margin: 0 3px 0 3px;
   min-width: 180px; }
-  .dsmd-panel ul {
+  .dsmd-subpanel ul {
     list-style: none;
     padding: 0;
-    margin: 1px 0 1px 0; }
-    .dsmd-panel ul li {
+    margin: 0; }
+    .dsmd-subpanel ul li {
       font-style: normal;
       font-size: 12px;
       padding: 2px;
       margin: 4px 2px;
       line-height: 12px; }
-      .dsmd-panel ul li.dsmd-li-title {
+      .dsmd-subpanel ul li.dsmd-li-title {
         padding: 4px;
         background-color: #303030;
         color: white;
@@ -150,9 +159,23 @@
         margin-top: 3px;
         margin-bottom: 3px;
         border-radius: 3px; }
-  .dsmd-panel.dsmd-compact {
+  .dsmd-subpanel.dsmd-compact {
     display: block !important;
     max-width: inherit; }
+  .dsmd-subpanel.dsmd-column {
+    width: 150px;
+    min-width: unset;
+    margin: 0; }
+    .dsmd-subpanel.dsmd-column li {
+      overflow: hidden;
+      white-space: nowrap; }
+    .dsmd-subpanel.dsmd-column .dsmd-label {
+      margin: -2px 4px 0 2px; }
+
+.dsmd-column-cell {
+  border: 1px solid black;
+  border-radius: 3px;
+  margin: 2px 1px; }
 
 .dsmd-label {
   display: inline-block;
@@ -172,6 +195,9 @@
   .dsmd-label.dsmd-label-left {
     left: 2px;
     right: auto; }
+
+.dsmd-compact .dsmd-label {
+  right: 4px; }
 
 .dsmd-label-warning {
   background-color: #f89406; }
@@ -212,12 +238,12 @@
   display: inline;
   position: absolute;
   line-height: 14px;
-  top: 261px;
+  top: 281px;
   left: 5px;
   z-index: 1;
   width: auto;
   background: #303030;
-  color: #fff;
+  color: white;
   padding: 5px;
   font-size: 12px;
   border-radius: 3px; }
@@ -226,17 +252,45 @@
   .dsmd-status.dsmd-invalid {
     background: #780705; }
 
-.dsmd-visible {
-  opacity: 1 !important;
-  -webkit-transition: opacity 0.15s linear;
-  -moz-transition: opacity 0.15s linear;
-  transition: opacity 0.15s linear; }
+.dsmd-view-buttons {
+  display: inline;
+  position: absolute;
+  line-height: 14px;
+  top: 5.5px;
+  right: 30px;
+  z-index: 1;
+  width: auto;
+  padding: 4px 0; }
+  .dsmd-view-buttons ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0 2px; }
+  .dsmd-view-buttons li {
+    display: inline-block;
+    padding: 0;
+    margin: 0; }
+  .dsmd-view-buttons a {
+    border-radius: 3px;
+    background-color: #606060;
+    text-decoration: none;
+    padding: 5px;
+    margin: 0;
+    color: white;
+    font-size: 12px;
+    font-weight: bolder;
+    font-family: Helvetica, Arial, sans-serif; }
+    .dsmd-view-buttons a.active {
+      background-color: #3a87ad; }
+
+.dsmd-faded {
+  opacity: 0 !important;
+  -webkit-transition: opacity 0.05s linear;
+  -moz-transition: opacity 0.05s linear;
+  transition: opacity 0.05s linear; }
 
 .dsmd-hidden {
-  opacity: 0;
-  -webkit-transition: opacity 0.15s linear;
-  -moz-transition: opacity 0.15s linear;
-  transition: opacity 0.15s linear; }
+  display: none !important;
+  visibility: hidden; }
 
 @-webkit-keyframes dsmd-expander-loading-rotate {
   0% {
