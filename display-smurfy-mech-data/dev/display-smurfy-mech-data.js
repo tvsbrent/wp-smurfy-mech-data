@@ -1,6 +1,3 @@
-// RE-ENABLE TRY / CATCH BLOCK
-
-
 var SmurfyApp = {
   urlBase: window.location.href,
   cachedChassis : {},
@@ -13,7 +10,7 @@ var SmurfyApp = {
     components  : 755 },
   AjaxSettings : function( url ) {
     this.url            = url;
-    this.timeout        = 7500;
+    this.timeout        = 15000;
     this.type           = 'GET';
     this.async          = true;
     this.contentType    = "application/json";
@@ -320,7 +317,7 @@ SmurfyApp.getMechData = function( container, expander ) {
 
     container.on( 'dataReady', function() {
       container.off( 'dataReady' );
-      //try {
+      try {
         SmurfyApp.buildViewBody( container, dataID );
         SmurfyApp.appendMechStatsPanel( container, dataID );
         container
@@ -332,9 +329,9 @@ SmurfyApp.getMechData = function( container, expander ) {
             .attr( 'data-built-view', 'true' )
             .trigger( 'viewBuilt' );
         }, 250 );
-      //} catch ( errorMsg ) {
-        //SmurfyApp.handleError( expander, errorMsg );
-      //}
+      } catch ( errorMsg ) {
+        SmurfyApp.handleError( expander, errorMsg );
+      }
     } );
 
     if( !SmurfyApp.getChassisAndLoadoutID( expander, dataID ) ){
