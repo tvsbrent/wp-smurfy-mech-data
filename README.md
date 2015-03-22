@@ -10,7 +10,7 @@ The plugin looks for the following markup in any of your posts:
 
     ~<a href="http://mwo.smurfy-net.de/mechlab#i=
 
-**Note the tilde (~) that preceeds the anchor tag.** This is how the plugin determines that you want to embed the build the link points to in your page. If the plugin finds any such markup, it wraps the anchor element in some additional HTML. Once the browser receives your page, the JavaScript provided allows user to request info on that mech. Once the browser receives that mech data, the link is "expanded" and a summary of the build is viewable right in your page. 
+**Note the tilde (~) that preceeds the anchor tag.** This is how the plugin determines that you want to embed the build the link points to in your page. If the plugin finds any such markup, it wraps the anchor element in some additional HTML. Once the browser receives your page, the JavaScript provided allows the user to request info on that mech. Once the browser receives that mech data, the link is "expanded" and a summary of the build is viewable right in your page. 
 
 ##How to get started:
 
@@ -18,7 +18,7 @@ The plugin looks for the following markup in any of your posts:
   * You do not need to download the `dev` folder. That contains the source files for the JavaScript and CSS. You are welcome to tweak these files, you just don't need them to have the plugin function.
 2. Make a `display-smurfy-mech-data` folder in the `wp-content\plugins` directory of your site.
 3. Upload the files listed below to that directory.
-  * `display-smurfy-mech-data.min.cs`
+  * `display-smurfy-mech-data.min.css`
   * `display-smurfy-mech-data.min.js`
   * `display-smurfy-mech-data.php`
 4. You will need to CHMOD **the directory** you created in Step 2 and **all the files** you put in it to 755. This sets the directory and files as readable and executable by the world. For more information on CHMOD, you can read up on it on the <a href="http://codex.wordpress.org/Changing_File_Permissions">WordPress site</a>.
