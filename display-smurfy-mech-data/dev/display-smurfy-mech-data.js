@@ -276,12 +276,12 @@ SmurfyApp.resizeContainerElements = function( container, updatedImageFadedState,
 
   if( updatedCompactState ) {
     if( SmurfyApp.useCompactStats ) {
-      container.find('span').addClass('dsmd-compact');
+      container.find('span:not(.dsmd-mech-image)').addClass('dsmd-compact');
       container.find('.dsmd-panel[data-panel-type="' + SmurfyApp.PanelType.stats + '"]')
         .children(':not(.dsmd-mech-image)')
           .addClass('dsmd-compact');
     } else {
-      container.find('span').removeClass('dsmd-compact');
+      container.find('span:not(.dsmd-mech-image)').removeClass('dsmd-compact');
       container.find('.dsmd-panel[data-panel-type="' + SmurfyApp.PanelType.stats + '"]')
         .children(':not(.dsmd-mech-image)')
           .removeClass('dsmd-compact');
@@ -381,7 +381,7 @@ SmurfyApp.buildViewBody = function( container, dataID ) {
   container.append( SmurfyApp.viewBodyTemplate( displayData ) );
 
   // Setup the anchor click handlers.
-  container.find( 'a' ).on( 'click', SmurfyApp.anchorClickHandler );
+  container.find( 'a[data-display-panel-type]' ).on( 'click', SmurfyApp.anchorClickHandler );
 };
 
 SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
@@ -491,7 +491,7 @@ SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
 SmurfyApp.appendMechComponentsPanel = function( container, dataID ){
   var chassisData = SmurfyApp.cachedChassis[dataID.chassis],
       loadoutData = SmurfyApp.cachedLoadouts[dataID.key()],
-      emptyCellValue = "&nbsp;";
+      emptyCellValue = undefined;
 
   var buildPairedArray = function( component1Name, component2Name ) {
     var ret = [ [ ], [ ] ];
@@ -839,35 +839,35 @@ SmurfyApp.panelMechComponentsTemplate = _.template(' \
 <div class="dsmd-panel dsmd-column" data-panel-type="<%= SmurfyApp.PanelType.components %>"> \
   <div class="dsmd-subpanel dsmd-column"> \
     <div style="height: 30px"></div> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Arm", items: armsItems[0], armor: rightArmArmor, rearArmor: undefined } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Arm", items: armsItems[0], armor: rightArmArmor, rearArmor: undefined, isCompact: false } ) %> \
   </div><div class="dsmd-subpanel dsmd-column"> \
     <div style="height: 15px"></div> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Torso", items: torsosItems[0], armor: rightTorsoArmor, rearArmor: rightRearTorsoArmor } ) %> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Leg", items: legsItems[0], armor: rightLegArmor, rearArmor: undefined } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Torso", items: torsosItems[0], armor: rightTorsoArmor, rearArmor: rightRearTorsoArmor, isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Leg", items: legsItems[0], armor: rightLegArmor, rearArmor: undefined, isCompact: false } ) %> \
   </div><div class="dsmd-subpanel dsmd-column"> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Head", items: headItems, armor: headArmor, rearArmor: undefined } ) %> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Center Torso", items: centerItems, armor: centerTorsoArmor, rearArmor: centerRearTorsoArmor } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { title: "Head", items: headItems, armor: headArmor, rearArmor: undefined, isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { title: "Center Torso", items: centerItems, armor: centerTorsoArmor, rearArmor: centerRearTorsoArmor, isCompact: false } ) %> \
   </div><div class="dsmd-subpanel dsmd-column"> \
     <div style="height: 15px"></div> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Torso", items: torsosItems[1], armor: leftTorsoArmor, rearArmor: leftRearTorsoArmor } ) %> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Leg", items: legsItems[1], armor: leftLegArmor, rearArmor: undefined } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Torso", items: torsosItems[1], armor: leftTorsoArmor, rearArmor: leftRearTorsoArmor, isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Leg", items: legsItems[1], armor: leftLegArmor, rearArmor: undefined, isCompact: false } ) %> \
   </div><div class="dsmd-subpanel dsmd-column"> \
     <div style="height: 30px"></div> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Arm", items: armsItems[1], armor: leftArmArmor, rearArmor: undefined } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Arm", items: armsItems[1], armor: leftArmArmor, rearArmor: undefined, isCompact: false } ) %> \
   </div> \
 </div>');
 
 SmurfyApp.panelMechComponentsCompactTemplate = _.template( '\
   <div class="dsmd-panel dsmd-compact" data-panel-type="<%= SmurfyApp.PanelType.components %>"> \
     <div class="dsmd-subpanel dsmd-compact"> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Head", items: headItems, armor: headArmor, rearArmor: undefined } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Center Torso", items: centerItems, armor: centerTorsoArmor, rearArmor: centerRearTorsoArmor } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Torso", items: torsosItems[0], armor: rightTorsoArmor, rearArmor: rightRearTorsoArmor } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Torso", items: torsosItems[1], armor: leftTorsoArmor, rearArmor: leftRearTorsoArmor } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Arm", items: armsItems[0], armor: rightArmArmor, rearArmor: undefined } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Arm", items: armsItems[1], armor: leftArmArmor, rearArmor: undefined } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Leg", items: legsItems[0], armor: rightLegArmor, rearArmor: undefined } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Leg", items: legsItems[1], armor: leftLegArmor, rearArmor: undefined } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { title: "Head", items: headItems, armor: headArmor, rearArmor: undefined, isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { title: "Center Torso", items: centerItems, armor: centerTorsoArmor, rearArmor: centerRearTorsoArmor, isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Torso", items: torsosItems[0], armor: rightTorsoArmor, rearArmor: rightRearTorsoArmor, isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Torso", items: torsosItems[1], armor: leftTorsoArmor, rearArmor: leftRearTorsoArmor, isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Arm", items: armsItems[0], armor: rightArmArmor, rearArmor: undefined, isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Arm", items: armsItems[1], armor: leftArmArmor, rearArmor: undefined, isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Leg", items: legsItems[0], armor: rightLegArmor, rearArmor: undefined, isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Leg", items: legsItems[1], armor: leftLegArmor, rearArmor: undefined, isCompact: true } ) %> \
     </div> \
   </div>');
 
@@ -878,8 +878,16 @@ SmurfyApp.cellMechComponentTemplate = _.template(
        <% if( rearArmor !== undefined ) { %> \
          (<%= rearArmor %>) \
        <% } %></span></li> \
-       <%  _.each( items, function( item ) { %> \
-         <li><%= item %></li> \
-       <%  } ); %> \
+       <%  _.each( items, function( item ) { \
+            if( item === undefined ) { \
+              if( isCompact ) { \
+                return true; \
+              } else { %> \
+                <li>&nbsp;</li> \
+       <%     } \
+            } else { %> \
+              <li><%= item %></li> \
+       <%   } \
+          } ); %> \
      </ul> \
    </div>');

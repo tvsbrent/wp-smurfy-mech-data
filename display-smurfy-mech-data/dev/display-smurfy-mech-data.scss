@@ -333,7 +333,8 @@ $size-scrollbar: 25px;
   display: inline;
   position: absolute;
   line-height: $height-footer;
-  top: ( $size-collapsed - $height-footer ) / 2;
+  //top: ( $size-collapsed - $height-footer ) / 2;
+  top: $padding-container;
   right: ( $size-arrow + $padding-container ) * 2;
   z-index: 1;
   width: auto;
@@ -361,6 +362,11 @@ $size-scrollbar: 25px;
     font-size: 12px;
     font-weight: bolder;
     font-family: Helvetica, Arial, sans-serif;
+    line-height: $height-footer;
+    border-top: 0 !important;
+    border-right: 0 !important;
+    border-left: 0 !important;
+    border-bottom: 0 !important;
 
     &.active {
       background-color: #3a87ad;
