@@ -1,10 +1,4 @@
-/*
-   Contained here are details about items that are not part
-   of the data we get back from from Smurfy. If new items
-   are added to the game, this file will have to be updated
-   as well.
-*/
-SmurfyApp.mechItemDetails = {
+var mechItemDetails = { 
   "1000" : {
     "display_name" : "AC/20",
     "type" : "weapon",
