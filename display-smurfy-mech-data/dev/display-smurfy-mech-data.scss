@@ -215,7 +215,7 @@ $size-scrollbar: 25px;
 
   &.dsmd-column {
     width: 150px;
-    min-width: unset; // Have to override the inherited min-width
+    min-width: 0; // Have to override the inherited min-width
     margin: 0;
 
     li{
