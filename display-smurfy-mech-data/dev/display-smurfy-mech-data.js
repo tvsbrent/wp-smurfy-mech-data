@@ -194,17 +194,17 @@ SmurfyApp.handleResizeComplete = function() {
     SmurfyApp.errorMessage.css( { top: 0, left: 0 } );
   }
 
-  // Potentially update anchor text.
+  // Potentially update view button text.
   if( updateCompactStatsState ){
-    var anchorUpdater = function( panelType, newText ) {
-      jQuery('body').find( 'a[data-display-panel-type="' + panelType + '"]' ).text( newText );
+    var buttonUpdater = function( panelType, newText ) {
+      jQuery('body').find( 'div[data-display-panel-type="' + panelType + '"]' ).text( newText );
     };
     if( SmurfyApp.useCompactStats ) {
-      anchorUpdater( SmurfyApp.PanelType.stats, 'S' );
-      anchorUpdater( SmurfyApp.PanelType.components, 'C' );
+      buttonUpdater( SmurfyApp.PanelType.stats, 'S' );
+      buttonUpdater( SmurfyApp.PanelType.components, 'C' );
     } else {
-      anchorUpdater( SmurfyApp.PanelType.stats, 'Stats' );
-      anchorUpdater( SmurfyApp.PanelType.components, 'Components' );
+      buttonUpdater( SmurfyApp.PanelType.stats, 'Stats' );
+      buttonUpdater( SmurfyApp.PanelType.components, 'Components' );
     }
   }
 };
@@ -377,8 +377,8 @@ SmurfyApp.buildViewBody = function( container, dataID ) {
 
   container.append( SmurfyApp.viewBodyTemplate( displayData ) );
 
-  // Setup the anchor click handlers.
-  container.find( 'a[data-display-panel-type]' ).on( 'click', SmurfyApp.anchorClickHandler );
+  // Setup the view button click handlers.
+  container.find( 'div[data-display-panel-type]' ).on( 'click', SmurfyApp.viewButtonClickHandler );
 };
 
 SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
@@ -615,11 +615,10 @@ SmurfyApp.expanderClickHandler = function() {
   }
 };
 
-SmurfyApp.anchorClickHandler = function( e ) {
-  e.preventDefault();
-  var anchor = jQuery(this),
-      selectedType = anchor.data('display-panel-type'),
-      container = anchor.closest('.dsmd-container' ),
+SmurfyApp.viewButtonClickHandler = function( e ) {
+  var button = jQuery(this),
+      selectedType = button.data('display-panel-type'),
+      container = button.closest('.dsmd-container'),
       currentType = container.attr('data-selected-panel');
 
   if( selectedType == currentType ) {
@@ -651,10 +650,10 @@ SmurfyApp.anchorClickHandler = function( e ) {
       throw "Unsupported panel type.";
   }
 
-  var mySpan = anchor.closest('span' ),
-      allAnchors = mySpan.find('a');
-  allAnchors.removeClass('active');
-  anchor.addClass('active');
+  var mySpan = button.closest('span'),
+      allButtons = mySpan.find('.dsmd-view-button');
+  allButtons.removeClass('dsmd-view-button-active');
+  button.addClass('dsmd-view-button-active');
 
   if( SmurfyApp.updateImageState( container.width() ) ) {
     SmurfyApp.resizeContainerElements( container, true, false, false );
@@ -734,12 +733,12 @@ SmurfyApp.viewBodyTemplate = _.template(' \
   <div class="dsmd-body"> \
     <span class="dsmd-view-buttons dsmd-hidden"> \
       <ul> \
-        <li><a href="#" title="Stats" class="active" data-display-panel-type="<%= SmurfyApp.PanelType.stats %>">\
+        <li><div class="dsmd-view-button dsmd-view-button-active" data-display-panel-type="<%= SmurfyApp.PanelType.stats %>">\
           <%= isCompact ? "S" : "Stats" %> \
-        </a></li> \
-        <li><a href="#" title="Components" data-display-panel-type="<%= SmurfyApp.PanelType.components %>">\
+        </div></li> \
+        <li><div class="dsmd-view-button" data-display-panel-type="<%= SmurfyApp.PanelType.components %>">\
           <%= isCompact ? "C" : "Components" %> \
-        </a></li> \
+        </div></li> \
       </ul> \
     </span>\
   </div>');
