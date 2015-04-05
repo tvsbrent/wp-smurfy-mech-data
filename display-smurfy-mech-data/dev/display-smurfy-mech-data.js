@@ -2,6 +2,16 @@ var SmurfyApp = {
   urlBase: window.location.href,
   cachedChassis : {},
   cachedLoadouts : {},
+  cachedWeapons : {},
+  cachedAmmo : {},
+  cachedOmnipods : {},
+  cachedModules : {},
+  currentEquipmmentDataState : 0,
+  EquipmentDataState : {
+    'unknown'   : 0,
+    'loading'   : 1,
+    'available' : 2,
+    'error'     : 3 },
   useCompactStats : false,
   useCompactComponents : false,
   Breakpoints : {
@@ -14,20 +24,27 @@ var SmurfyApp = {
     this.type           = 'GET';
     this.async          = true;
     this.contentType    = "application/json";
+    this.ifModified     = false;
     this.dataType       = 'json'; },
   DataID : function( chassisID, loadoutID )
   {
     this.chassis = chassisID;
     this.loadout = loadoutID; },
-  errorMessage : {
+  MechComponent : function () {
+    this.name         = undefined;
+    this.omnipodName  = undefined;
+    this.equipment    = [];
+    this.armor        = []; },
+  messageBox : {
     currentExpander : null,
     currentTimeOut : 0 },
-  ExpanderBaseClass : 'dsmd-expander',
-  ExpanderStateClasses : {
+  ExpanderBaseStyle : 'dsmd-expander',
+  ExpanderStateStyle : {
     'open'      : 'dsmd-expander-arrow-down',
     'close'     : 'dsmd-expander-arrow-up',
     'loading'   : 'dsmd-expander-loading',
-    'error'     : 'dsmd-expander-error' },
+    'error'     : 'dsmd-expander-error',
+    'disabled'  : 'dsmd-expander-arrow-down-disabled' },
   ImageState : {
     hidden  : 0,
     faded   : 1,
@@ -49,6 +66,114 @@ SmurfyApp.DataID.prototype.allURL = function(){
 
 SmurfyApp.DataID.prototype.loadoutURL = function(){
   return SmurfyApp.urlBase + "?display-smurfy-mech-data-loadout=" + this.chassis + ":" + this.loadout;
+};
+
+SmurfyApp.MechComponent.prototype.getLoadoutIndex = function( loadoutData, componentName ) {
+  for( var i = 0; i < loadoutData.configuration.length; ++i ) {
+    if( loadoutData.configuration[i].name === componentName ) {
+      return i;
+    }
+  }
+  return undefined;
+};
+
+SmurfyApp.MechComponent.ComponentNames = {
+  'head'          : [ 'Head',         'H' ],
+  'centre_torso'  : [ 'Center Torso', 'CT' ],
+  'left_torso'    : [ 'Left Torso',   'LT' ],
+  'right_torso'   : [ 'Right Torso',  'RT' ],
+  'left_arm'      : [ 'Left Arm',     'LA' ],
+  'right_arm'     : [ 'Right Arm',    'RA' ],
+  'left_leg'      : [ 'Left Leg',     'LL' ],
+  'right_leg'     : [ 'Right Leg',    'RL' ]
+};
+
+SmurfyApp.MechComponent.prototype.build = function ( chassisData, loadoutData, componentName ) {
+  var componentIndex = this.getLoadoutIndex( loadoutData, componentName );
+  if( componentIndex === undefined ) {
+    return;
+  }
+
+  var component = loadoutData.configuration[componentIndex];
+
+  if( component.hasOwnProperty( 'omni_pod' ) ) {
+    var omnipodID = component['omni_pod'];
+    if( omnipodID > 0 ){
+      // Get the family from the chassis data and look up this omnipod.
+      var omnipods = SmurfyApp.cachedOmnipods[chassisData['family']];
+      this.omnipodName = omnipods[omnipodID].details.translatedName;
+      // Shorten the name.
+      this.omnipodName = this.omnipodName.replace(SmurfyApp.MechComponent.ComponentNames[componentName][0].toUpperCase(), '' );
+    }
+  }
+
+  // Build up the equipment array.
+  var equipmentArray = component.items;
+  if( equipmentArray.length === 0 && this.equipment.length === 0 ) {
+    this.equipment.push( undefined );
+  } else {
+    for( var j = 0; j < equipmentArray.length; ++j ) {
+      var entry = {
+        name : equipmentArray[j].name,
+        style : 'info'
+      };
+
+      entry.name = entry.name.replace('CLAN ', 'C. ');
+
+      // We need to determine style of the entry.
+      var id = equipmentArray[j].id;
+      // See if it's a weapon.
+      if( SmurfyApp.cachedWeapons.hasOwnProperty( id ) ){
+        entry.style = SmurfyApp.cachedWeapons[id].type.toLowerCase();
+        if( entry.style == 'missle' ) {
+          entry.style = 'missile';
+        }
+        entry.style = 'mech-hardpoint-' + entry.style;
+      } else if( SmurfyApp.cachedAmmo.hasOwnProperty( id ) ) {
+        entry.style = 'ammo';
+      } else if( SmurfyApp.cachedModules.hasOwnProperty( id ) ) {
+        switch( SmurfyApp.cachedModules[id].type ){
+          case 'CHeatSinkStats':
+            if( entry.name.indexOf('DOUBLE') > -1 ) {
+              entry.name = entry.name.replace( 'HEAT SINK', 'HS' );
+            }
+            entry.style = 'hs';
+            break;
+          case 'CTargetingComputerStats':
+            entry.name = entry.name.replace( 'TARGETING COMP.', 'T. COMP.' );
+            // deliberately not breaking here.
+          case 'CGECMStats':
+          case 'CClanBAPStats':
+            entry.style = 'mech-hardpoint-tech';
+            break;
+        }
+      }
+
+      this.equipment.push( entry );
+    }
+  }
+
+  // Build the armor array.
+  this.armor.push( component.armor );
+  if( componentName.indexOf( 'torso' ) > -1 ) {
+    var rearComponentIndex = this.getLoadoutIndex( loadoutData, componentName + "_rear" );
+    if( rearComponentIndex !== undefined ) {
+      this.armor.push( loadoutData.configuration[rearComponentIndex].armor );
+    }
+  }
+
+  this.name = SmurfyApp.MechComponent.ComponentNames[componentName][0];
+
+};
+
+SmurfyApp.MechComponent.balanceEquipmentLengths = function( component1, component2 ) {
+  var maxLength = component1.equipment.length > component2.equipment.length ? component1.equipment.length : component2.equipment.length;
+  while( component1.equipment.length < maxLength ) {
+    component1.equipment.push( undefined );
+  }
+  while( component2.equipment.length < maxLength ) {
+    component2.equipment.push( undefined );
+  }
 };
 
 SmurfyApp.roundValue = function( value ) {
@@ -111,55 +236,58 @@ SmurfyApp.getChassisAndLoadoutID = function( expander, dataID ) {
 };
 
 SmurfyApp.setExpanderState = function( expander, state ) {
-  expander.attr( "class", SmurfyApp.ExpanderBaseClass + " " + SmurfyApp.ExpanderStateClasses[state] );
+  expander.attr( "class", SmurfyApp.ExpanderBaseStyle + " " + SmurfyApp.ExpanderStateStyle[state] );
 };
 
-SmurfyApp.hasExpanderStateClasses = function( expander, state ) {
-  return expander.hasClass( SmurfyApp.ExpanderStateClasses[state] );
+SmurfyApp.hasExpanderStateStyle = function( expander, state ) {
+  return expander.hasClass( SmurfyApp.ExpanderStateStyle[state] );
 };
 
 SmurfyApp.handleError = function( expander, errorMsg ) {
   SmurfyApp.setExpanderState( expander, 'error' );
   expander.off( 'click' );
   expander.data( 'error-msg', errorMsg );
-  expander.hover( function() { SmurfyApp.showExpanderError( jQuery( this ) ); },
-                  function() { SmurfyApp.hideExpanderError(); } );
+  expander.hover( function() { SmurfyApp.showExpanderMessage( jQuery( this ) ); },
+                  function() { SmurfyApp.hideExpanderMessage(); } );
   // Initial display of the error.
-  SmurfyApp.showExpanderError( expander );
+  SmurfyApp.showExpanderMessage( expander );
 };
 
-SmurfyApp.showExpanderError = function( expander ) {
+SmurfyApp.showExpanderMessage = function( expander, message ) {
   // Clear any current timeouts.
-  window.clearTimeout( SmurfyApp.errorMessage.currentTimeOut );
+  window.clearTimeout( SmurfyApp.messageBox.currentTimeOut );
 
-  if( SmurfyApp.errorMessage.currentExpander !== expander ) {
-    SmurfyApp.errorMessage
-      .text( expander.data( 'error-msg' ) )
+  if( SmurfyApp.messageBox.currentExpander !== expander ) {
+    if( message == undefined ) {
+      message = expander.data( 'error-msg' );
+    }
+    SmurfyApp.messageBox
+      .text( message )
       .currentExpander = expander;
-    SmurfyApp.positionExpanderError( expander );
+    SmurfyApp.positionExpanderMessage( expander );
   }
 
-  SmurfyApp.errorMessage
+  SmurfyApp.messageBox
     .css( { "z-index": 10 } )
     .addClass( 'dsmd-expander-visible' );
 };
 
-SmurfyApp.hideExpanderError = function() {
-  SmurfyApp.errorMessage
+SmurfyApp.hideExpanderMessage = function() {
+  SmurfyApp.messageBox
     .removeClass( 'dsmd-expander-visible' )
     .currentTimeOut = window.setTimeout( function() {
-      SmurfyApp.errorMessage
+      SmurfyApp.messageBox
         .css( { "z-index": -10 } )
         .currentExpander = null;
     }, 250 );
 };
 
-SmurfyApp.positionExpanderError = function( expander ) {
+SmurfyApp.positionExpanderMessage = function( expander ) {
   var expanderOffset = expander.offset();
 
-  SmurfyApp.errorMessage.css( {
+  SmurfyApp.messageBox.css( {
     top: expanderOffset.top + ( expander.height() * 2 ),
-    left: expanderOffset.left + expander.width() - SmurfyApp.errorMessage.width()
+    left: expanderOffset.left + expander.width() - SmurfyApp.messageBox.width()
   } );
 };
 
@@ -188,10 +316,10 @@ SmurfyApp.handleResizeComplete = function() {
     SmurfyApp.resizeContainerElements( jQuery( this ), updatedImageState, updateCompactStatsState, updateCompactComponentState );
   } );
 
-  if( SmurfyApp.errorMessage.currentExpander !== null ) {
-    SmurfyApp.positionExpanderError( SmurfyApp.errorMessage.currentExpander );
+  if( SmurfyApp.messageBox.currentExpander !== null ) {
+    SmurfyApp.positionExpanderMessage( SmurfyApp.messageBox.currentExpander );
   } else {
-    SmurfyApp.errorMessage.css( { top: 0, left: 0 } );
+    SmurfyApp.messageBox.css( { top: 0, left: 0 } );
   }
 
   // Potentially update view button text.
@@ -273,12 +401,12 @@ SmurfyApp.resizeContainerElements = function( container, updatedImageFadedState,
 
   if( updatedCompactState ) {
     if( SmurfyApp.useCompactStats ) {
-      container.find('span:not(.dsmd-mech-image)').addClass('dsmd-compact');
+      container.find('.dsmd-label-stats-armor').addClass('dsmd-compact');
       container.find('.dsmd-panel[data-panel-type="' + SmurfyApp.PanelType.stats + '"]')
         .children(':not(.dsmd-mech-image)')
           .addClass('dsmd-compact');
     } else {
-      container.find('span:not(.dsmd-mech-image)').removeClass('dsmd-compact');
+      container.find('.dsmd-label-stats-armor').removeClass('dsmd-compact');
       container.find('.dsmd-panel[data-panel-type="' + SmurfyApp.PanelType.stats + '"]')
         .children(':not(.dsmd-mech-image)')
           .removeClass('dsmd-compact');
@@ -390,8 +518,12 @@ SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
   // Iterate over the armaments and add type
   _.each( loadoutData.stats.armaments, function(armament) {
     if( !armament.hasOwnProperty( 'weapon_type' ) &&
-        SmurfyApp.mechItemDetails.hasOwnProperty( armament.id ) ) {
-      armament.weapon_type = SmurfyApp.mechItemDetails[armament.id].weapon_type;
+        SmurfyApp.cachedWeapons.hasOwnProperty( armament.id ) ) {
+      armament.weapon_type = SmurfyApp.cachedWeapons[armament.id].type.toLowerCase();
+      if( armament.weapon_type === 'missle' ) {
+        // There's a typo in the data we receive, change it to 'missile'.
+        armament.weapon_type = 'missile';
+      }
     } else {
       armament.weapon_type = 'unknown';
     }
@@ -400,8 +532,8 @@ SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
   // Iterate over the ammuntion and add num shots
   _.each( loadoutData.stats.ammunition, function( ammo ){
     if( !ammo.hasOwnProperty( 'num_shots' ) &&
-        SmurfyApp.mechItemDetails.hasOwnProperty( ammo.id ) ) {
-      ammo.num_shots = ( SmurfyApp.mechItemDetails[ammo.id].num_shots || 0 ) * ammo.count;
+        SmurfyApp.cachedAmmo.hasOwnProperty( ammo.id ) ) {
+      ammo.num_shots = ( SmurfyApp.cachedAmmo[ammo.id].numShots || 0 ) * ammo.count;
     }
   } );
 
@@ -487,97 +619,25 @@ SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
 
 SmurfyApp.appendMechComponentsPanel = function( container, dataID ){
   var chassisData = SmurfyApp.cachedChassis[dataID.chassis],
-      loadoutData = SmurfyApp.cachedLoadouts[dataID.key()],
-      emptyCellValue = undefined;
+      loadoutData = SmurfyApp.cachedLoadouts[dataID.key()];
 
-  var buildPairedArray = function( component1Name, component2Name ) {
-    var ret = [ [ ], [ ] ];
-
-    var itemArray1 = [],
-        itemArray2 = [];
-
-    for( var i = 0, ticker = 0; i < loadoutData.configuration.length; ++i ) {
-      if( loadoutData.configuration[i].name === component1Name ) {
-        itemArray1 = loadoutData.configuration[i].items;
-        ticker++;
-      } else if ( loadoutData.configuration[i].name === component2Name ) {
-        itemArray2 = loadoutData.configuration[i].items;
-        ticker++;
-      }
-      if( ticker === 2 ) {
-        break;
-      }
+  var mechComponents = {};
+  for( var key in SmurfyApp.MechComponent.ComponentNames ) {
+    if( SmurfyApp.MechComponent.ComponentNames.hasOwnProperty( key ) ) {
+      mechComponents[key] = new SmurfyApp.MechComponent();
+      mechComponents[key].build( chassisData, loadoutData, key );
     }
+  }
 
-    var numElements = itemArray1.length >= itemArray2.length ? itemArray1.length : itemArray2.length;
-
-    if( numElements === 0 ) {
-      ret[0].push( emptyCellValue );
-      ret[1].push( emptyCellValue );
-    } else {
-      for( var i = 0; i < numElements; ++i ) {
-        if( i < itemArray1.length ) {
-          ret[0].push( itemArray1[i].name );
-        } else {
-          ret[0].push( emptyCellValue );
-        }
-        if( i < itemArray2.length ) {
-          ret[1].push( itemArray2[i].name );
-        } else {
-          ret[1].push( emptyCellValue );
-        }
-      }
-    }
-
-    return ret;
-  };
-
-  var buildArray = function( componentName ) {
-    var ret = [];
-
-    for( var i = 0; i < loadoutData.configuration.length; ++i ) {
-      if( loadoutData.configuration[i].name === componentName ) {
-        var itemArray = loadoutData.configuration[i].items;
-        if( itemArray.length === 0 ) {
-          ret.push( emptyCellValue );
-        } else {
-          for( var j = 0; j < itemArray.length; ++j ) {
-            ret.push( itemArray[j].name );
-          }
-        }
-        break;
-      }
-    }
-
-    return ret;
-  };
-
-  var getArmor = function( componentName ) {
-    for( var i = 0; i < loadoutData.configuration.length; ++i ) {
-      if( loadoutData.configuration[i].name === componentName ) {
-        return loadoutData.configuration[i].armor;
-      }
-    }
-    return 0;
-  };
+  if( !SmurfyApp.useCompactComponents ) {
+    // Make sure that the left / right components have the same length
+    SmurfyApp.MechComponent.balanceEquipmentLengths( mechComponents['left_torso'], mechComponents['right_torso'] );
+    SmurfyApp.MechComponent.balanceEquipmentLengths( mechComponents['left_arm'], mechComponents['right_arm'] );
+    SmurfyApp.MechComponent.balanceEquipmentLengths( mechComponents['left_leg'], mechComponents['right_leg'] );
+  }
 
   var displayData = {
-    legsItems             : buildPairedArray( "right_leg", "left_leg" ),
-    armsItems             : buildPairedArray( "right_arm", "left_arm" ),
-    torsosItems           : buildPairedArray( "right_torso", "left_torso" ),
-    centerItems           : buildArray( "centre_torso" ),
-    headItems             : buildArray( "head" ),
-    rightLegArmor         : getArmor( "right_leg" ),
-    leftLegArmor          : getArmor( "left_leg" ),
-    rightArmArmor         : getArmor( "right_arm" ),
-    leftArmArmor          : getArmor( "left_arm" ),
-    rightTorsoArmor       : getArmor( "right_torso" ),
-    rightRearTorsoArmor   : getArmor( "right_torso_rear"),
-    leftTorsoArmor        : getArmor( "left_torso" ),
-    leftRearTorsoArmor    : getArmor( "left_torso_rear"),
-    centerTorsoArmor      : getArmor( "centre_torso" ),
-    centerRearTorsoArmor  : getArmor( "centre_torso_rear"),
-    headArmor             : getArmor( "head")
+    components : mechComponents
   };
 
   if( SmurfyApp.useCompactComponents ) {
@@ -662,6 +722,75 @@ SmurfyApp.viewButtonClickHandler = function( e ) {
   container.attr( 'data-selected-panel', selectedType );
 };
 
+SmurfyApp.updateEquipmentDataState = function( newState ) {
+  if( newState === SmurfyApp.EquipmentDataState.unknown ) {
+    return;
+  }
+
+  SmurfyApp.hideExpanderMessage();
+
+  var expanders = jQuery( '.dsmd-expander' );
+
+  switch( newState ) {
+    case SmurfyApp.EquipmentDataState.error:
+    {
+      SmurfyApp.setExpanderState( expanders, 'disabled' );
+      expanders
+        .off( 'mouseenter mouseleave' )
+        .hover( function() { SmurfyApp.showExpanderMessage( jQuery( this ), "Failed to load shared equipment data!" ); },
+                function() { SmurfyApp.hideExpanderMessage(); } );
+    }
+    break;
+    case SmurfyApp.EquipmentDataState.available:
+    {
+      SmurfyApp.setExpanderState( expanders, 'open' );
+      expanders
+        .off( 'mouseenter mouseleave' )
+        .on( 'click', SmurfyApp.expanderClickHandler );
+    }
+    break;
+    case SmurfyApp.EquipmentDataState.loading:
+    {
+      SmurfyApp.setExpanderState( expanders, 'disabled' );
+      expanders
+        .hover( function() { SmurfyApp.showExpanderMessage( jQuery( this ), "Loading shared equipment data..." ); },
+                function() { SmurfyApp.hideExpanderMessage(); } );
+    }
+    break;
+  }
+
+  SmurfyApp.currentEquipmmentDataState = newState;
+};
+
+SmurfyApp.loadEquipmentData = function() {
+
+  SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.loading );
+
+  var completedRequests = 0;
+  var requestEquipment = function ( equipmentType, equipmentCacheName ) {
+    jQuery.ajax( new SmurfyApp.AjaxSettings( SmurfyApp.urlBase + "?display-smurfy-mech-equipment=" + equipmentType ) )
+      .done( function( response, textStatus, jqXHR ) {
+        SmurfyApp[equipmentCacheName] = response;
+        localStorage.setItem( 'cached-' + equipmentType, JSON.stringify( response ) );
+
+        ++completedRequests;
+        if( completedRequests === 4 ) {
+          localStorage.setItem( 'cached-time', new Date() );
+          SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.available );
+        }
+      } )
+      .fail( function () {
+        SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.error );
+        console.log( "Failed to load " + equipmentType + " data." );
+      } );
+  };
+
+  requestEquipment( 'weapons', 'cachedWeapons' );
+  requestEquipment( 'ammo', 'cachedAmmo' );
+  requestEquipment( 'omnipods', 'cachedOmnipods' );
+  requestEquipment( 'modules', 'cachedModules' );
+};
+
 jQuery( document ).ready( function() {
   // Grab a single container object. If none exist, then we'll
   // just leave, as there's nothing on this page for us.
@@ -685,24 +814,69 @@ jQuery( document ).ready( function() {
   var uri = SmurfyApp.parseUri( SmurfyApp.urlBase );
   SmurfyApp.urlBase = uri.protocol + "://" + uri.authority + uri.path + uri.file;
 
-  // create the error msg div
-  jQuery('body').append( SmurfyApp.errorTemplate() );
-  SmurfyApp.errorMessage = jQuery.extend( SmurfyApp.errorMessage, jQuery( '#dsmd-expander-error') );
+  // create the msg div
+  jQuery('body').append( SmurfyApp.messageBoxTemplate() );
+  SmurfyApp.messageBox = jQuery.extend( SmurfyApp.messageBox, jQuery( '#dsmd-expander-message') );
+
+  // Get the cached data, either locally or from Smurfy.
+  var cachedTime = new Date( localStorage.getItem('cached-time') );
+  var expireTime = new Date();
+  // We consider the data as having expired after 23 hours.
+  expireTime.setHours( expireTime.getHours() - 23 );
+
+  var cachedDataValid = false;
+  if( cachedTime > expireTime ) {
+    try {
+      SmurfyApp.cachedWeapons = JSON.parse( localStorage.getItem( 'cached-weapons' ) );
+      SmurfyApp.cachedAmmo = JSON.parse( localStorage.getItem( 'cached-ammo' ) );
+      SmurfyApp.cachedOmnipods = JSON.parse( localStorage.getItem( 'cached-omnipods' ) );
+      SmurfyApp.cachedModules = JSON.parse( localStorage.getItem( 'cached-modules' ) );
+
+      // Check to make sure each one is valid.
+      var isValid = function( cachedData ) {
+        if( cachedData === undefined || cachedData === null ){
+          return false;
+        }
+        for( var prop in cachedData ) {
+          if( cachedData.hasOwnProperty( prop ) ) {
+            return true;
+          }
+        }
+        return false;
+      };
+      cachedDataValid = isValid( SmurfyApp.cachedWeapons ) &&
+                        isValid( SmurfyApp.cachedAmmo ) &&
+                        isValid( SmurfyApp.cachedOmnipods ) &&
+                        isValid( SmurfyApp.cachedModules );
+    } catch( ex ) {
+      // any errors will trigger a reload of the data.
+    }
+  }
+
+  if( cachedDataValid ) {
+    SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.available );
+  } else {
+    SmurfyApp.loadEquipmentData();
+  }
 
   // Setup the container event handlers
   jQuery('.dsmd-container')
     .on( 'toggleState', function() {
       var container = jQuery( this );
       container.toggleClass( 'dsmd-expanded' );
-      if( !SmurfyApp.Modernizr.csstransitions || !container.hasClass( 'dsmd-animation' ) ) {
-        container.trigger( 'transitionend' );
+      if( !container.hasClass( 'dsmd-animation' ) ) {
+        container.trigger( 'transitionState' );
+      } else {
+        window.setTimeout( function() {
+          container.trigger( 'transitionState' );
+        }, 400 ); // This time needs to match the animation time in the stylesheet
       }
     } )
-    .on( 'transitionend', function() {
+    .on( 'transitionState', function() {
       var container = jQuery( this );
       var expander = container.find( '.dsmd-expander' );
-      if( SmurfyApp.hasExpanderStateClasses( expander, 'loading' ) ||
-          SmurfyApp.hasExpanderStateClasses( expander, 'open' ) ) {
+      if( SmurfyApp.hasExpanderStateStyle( expander, 'loading' ) ||
+          SmurfyApp.hasExpanderStateStyle( expander, 'open' ) ) {
         SmurfyApp.setExpanderState( expander, 'close' );
         container.find('.dsmd-view-buttons').removeClass('dsmd-hidden');
       } else {
@@ -712,8 +886,6 @@ jQuery( document ).ready( function() {
       expander.on( 'click', SmurfyApp.expanderClickHandler );
       container.removeClass( 'dsmd-animation' );
     } );
-
-  jQuery( '.dsmd-expander' ).on( 'click', SmurfyApp.expanderClickHandler );
 
   // The window resize event handler.
   var resizeID;
@@ -727,7 +899,7 @@ jQuery( document ).ready( function() {
 //////////////////////////////////////////////////////////////
 // TEMPLATES
 
-SmurfyApp.errorTemplate = _.template('<div id="dsmd-expander-error" class="dsmd-expander-errormsg"></div>');
+SmurfyApp.messageBoxTemplate = _.template('<div id="dsmd-expander-message" class="dsmd-expander-msg"></div>');
 
 SmurfyApp.viewBodyTemplate = _.template(' \
   <div class="dsmd-body"> \
@@ -835,46 +1007,47 @@ SmurfyApp.panelMechComponentsTemplate = _.template(' \
 <div class="dsmd-panel dsmd-column" data-panel-type="<%= SmurfyApp.PanelType.components %>"> \
   <div class="dsmd-subpanel dsmd-column"> \
     <div style="height: 30px"></div> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Arm", items: armsItems[0], armor: rightArmArmor, rearArmor: undefined, isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { component: components["right_arm"], isCompact: false } ) %> \
   </div><div class="dsmd-subpanel dsmd-column"> \
     <div style="height: 15px"></div> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Torso", items: torsosItems[0], armor: rightTorsoArmor, rearArmor: rightRearTorsoArmor, isCompact: false } ) %> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Leg", items: legsItems[0], armor: rightLegArmor, rearArmor: undefined, isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { component: components["right_torso"], isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { component: components["right_leg"], isCompact: false } ) %> \
   </div><div class="dsmd-subpanel dsmd-column"> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Head", items: headItems, armor: headArmor, rearArmor: undefined, isCompact: false } ) %> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Center Torso", items: centerItems, armor: centerTorsoArmor, rearArmor: centerRearTorsoArmor, isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { component: components["head"], isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { component: components["centre_torso"], isCompact: false } ) %> \
   </div><div class="dsmd-subpanel dsmd-column"> \
     <div style="height: 15px"></div> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Torso", items: torsosItems[1], armor: leftTorsoArmor, rearArmor: leftRearTorsoArmor, isCompact: false } ) %> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Leg", items: legsItems[1], armor: leftLegArmor, rearArmor: undefined, isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { component: components["left_torso"], isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { component: components["left_leg"], isCompact: false } ) %> \
   </div><div class="dsmd-subpanel dsmd-column"> \
     <div style="height: 30px"></div> \
-    <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Arm", items: armsItems[1], armor: leftArmArmor, rearArmor: undefined, isCompact: false } ) %> \
+    <%= SmurfyApp.cellMechComponentTemplate( { component: components["left_arm"], isCompact: false } ) %> \
   </div> \
 </div>');
 
 SmurfyApp.panelMechComponentsCompactTemplate = _.template( '\
   <div class="dsmd-panel dsmd-compact" data-panel-type="<%= SmurfyApp.PanelType.components %>"> \
     <div class="dsmd-subpanel dsmd-compact"> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Head", items: headItems, armor: headArmor, rearArmor: undefined, isCompact: true } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Center Torso", items: centerItems, armor: centerTorsoArmor, rearArmor: centerRearTorsoArmor, isCompact: true } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Torso", items: torsosItems[0], armor: rightTorsoArmor, rearArmor: rightRearTorsoArmor, isCompact: true } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Torso", items: torsosItems[1], armor: leftTorsoArmor, rearArmor: leftRearTorsoArmor, isCompact: true } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Arm", items: armsItems[0], armor: rightArmArmor, rearArmor: undefined, isCompact: true } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Arm", items: armsItems[1], armor: leftArmArmor, rearArmor: undefined, isCompact: true } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Right Leg", items: legsItems[0], armor: rightLegArmor, rearArmor: undefined, isCompact: true } ) %> \
-      <%= SmurfyApp.cellMechComponentTemplate( { title: "Left Leg", items: legsItems[1], armor: leftLegArmor, rearArmor: undefined, isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { component: components["head"], isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { component: components["centre_torso"], isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { component: components["right_torso"], isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { component: components["left_torso"], isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { component: components["right_arm"], isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { component: components["left_arm"], isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { component: components["right_leg"], isCompact: true } ) %> \
+      <%= SmurfyApp.cellMechComponentTemplate( { component: components["left_leg"], isCompact: true } ) %> \
     </div> \
   </div>');
 
 SmurfyApp.cellMechComponentTemplate = _.template(
   '<div class="dsmd-column-cell"> \
      <ul> \
-       <li class="dsmd-li-title"><%= title %>&nbsp;<span class="dsmd-label dsmd-label-info"><%= armor %> \
-       <% if( rearArmor !== undefined ) { %> \
-         (<%= rearArmor %>) \
-       <% } %></span></li> \
-       <%  _.each( items, function( item ) { \
+       <li class="dsmd-li-title"><%= component.name %>&nbsp;<span class="dsmd-label dsmd-label-info dsmd-label-stats-armor">\
+       <%= component.armor[0] %><% if( component.armor.length == 2 ) { %> (<%= component.armor[1] %>)<% } %></span></li> \
+      <% if( component.omnipodName !== undefined ) { %> \
+        <li>Omnipod <span class="dsmd-label dsmd-label-info"><%= component.omnipodName %></span></li> \
+       <% } %> \
+       <%  _.each( component.equipment, function( item ) { \
             if( item === undefined ) { \
               if( isCompact ) { \
                 return true; \
@@ -882,7 +1055,7 @@ SmurfyApp.cellMechComponentTemplate = _.template(
                 <li>&nbsp;</li> \
        <%     } \
             } else { %> \
-              <li><%= item %></li> \
+              <li><span class="dsmd-label dsmd-label-left <% if( !isCompact ) { %>dsmd-label-column <% }%>dsmd-label-<%= item.style %>"><%= item.name %></span>&nbsp;</li> \
        <%   } \
           } ); %> \
      </ul> \

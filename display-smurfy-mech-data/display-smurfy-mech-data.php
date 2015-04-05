@@ -7,7 +7,7 @@
 Plugin Name: Display Smurfy Mech Data
 Plugin URI: https://github.com/tvsbrent/wp-smurfy-mech-data
 Description: Adds support for dropdown tooltips to anchors linked to Smurfy builds
-Version: 1.1
+Version: 1.2
 Author: Brent Schmidt
 */
 
@@ -15,6 +15,7 @@ namespace DisplaySmurfyMechData;
 
 const ENDPOINT_ALL = 'display-smurfy-mech-data-all';
 const ENDPOINT_LOADOUT = 'display-smurfy-mech-data-loadout';
+const ENDPOINT_EQUIPMENT = 'display-smurfy-mech-equipment';
 
 /* ADD SCRIPTS */
 add_action( 'init', 'DisplaySmurfyMechData\\AddScripts' );
@@ -23,7 +24,7 @@ function AddScripts()
   if( !is_admin() )
   {
     wp_enqueue_script('underscore');
-    wp_register_script('display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.js', __FILE__ ), array('jquery'), '1.1', true );
+    wp_register_script('display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.js', __FILE__ ), array('jquery'), '1.2', true );
     wp_enqueue_script('display-smurfy-mech-data');
   }
   
@@ -36,7 +37,7 @@ function AddStyles()
 {
   if( !is_admin() )
   {
-    wp_register_style( 'display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.css', __FILE__ ), array(), '1.1', 'all' );
+    wp_register_style( 'display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.css', __FILE__ ), array(), '1.2', 'all' );
     wp_enqueue_style( 'display-smurfy-mech-data' );
   }
 }
@@ -45,8 +46,9 @@ function AddStyles()
 // This will handle retrieving the JSON data from Smurfy's site.
 function AddEndPoints()
 {
-  add_rewrite_endpoint(ENDPOINT_ALL,      EP_ALL);
-  add_rewrite_endpoint(ENDPOINT_LOADOUT,  EP_ALL);
+  add_rewrite_endpoint(ENDPOINT_ALL,        EP_ALL);
+  add_rewrite_endpoint(ENDPOINT_LOADOUT,    EP_ALL);
+  add_rewrite_endpoint(ENDPOINT_EQUIPMENT,  EP_ALL);
 }
 
 function ActivateEndPoints() {
@@ -68,37 +70,73 @@ function MechDataEndPoint()
 {
   global $wp_query;
   
-  $queryVar = '';
   if( isset( $wp_query->query_vars[ENDPOINT_ALL] ) )
   {
-    $queryVar = ENDPOINT_ALL;
+    SendMechData( ENDPOINT_ALL, $wp_query->query_vars[ENDPOINT_ALL] );
   }
   else if( isset( $wp_query->query_vars[ENDPOINT_LOADOUT] ) )
   {
-    $queryVar = ENDPOINT_LOADOUT;
+    SendMechData( ENDPOINT_LOADOUT, $wp_query->query_vars[ENDPOINT_LOADOUT] );
+  }
+  else if( isset( $wp_query->query_vars[ENDPOINT_EQUIPMENT] ) )
+  {
+    SendMechEquipmentData( $wp_query->query_vars[ENDPOINT_EQUIPMENT] );
   }
   else
   {
     // Not a request for us.
     return; 
   }
-   
+}
+
+function SendMechEquipmentData( $queryVars )
+{
+  switch( $queryVars )
+  {
+    case "modules":    
+    case "weapons":
+    case "ammo":
+    case "omnipods":
+    case "mechs":
+    {
+      $returnJSON = new \stdClass;
+      if( !GetJSON( sprintf( 'http://mwo.smurfy-net.de/api/data/%s.json', $queryVars ), $returnJSON ) )
+      {
+        header( $_SERVER["SERVER_PROTOCOL"]." 404 Not Found" );
+        exit;
+      }
+      header( 'Content-Type: application/json' );
+      echo json_encode( $returnJSON );
+      exit;
+    }
+    break;
+    default:
+    {
+      header( $_SERVER["SERVER_PROTOCOL"]." 400 Bad Request" );
+      exit;
+    }
+    break;
+  }
+}
+
+function SendMechData( $queryType, $queryVars )
+{
   // Format of the query is chassis:loadout
-  $queryElements = explode(':', $wp_query->query_vars[$queryVar]);
+  $queryElements = explode( ':', $queryVars );
   if( count( $queryElements ) != 2 )
   {
-    header($_SERVER["SERVER_PROTOCOL"]." 400 Bad Request");
+    header( $_SERVER["SERVER_PROTOCOL"]." 400 Bad Request" );
     exit;
   }
  
   $returnJSON = new \stdClass;
   // Get the chassis data, if necessary.
-  if( $queryVar == ENDPOINT_ALL )
+  if( $queryType == ENDPOINT_ALL )
   {
     $returnJSON->chassis = new \stdClass;
     if( !GetJSON( sprintf( 'http://mwo.smurfy-net.de/api/data/mechs/%s.json', $queryElements[0] ), $returnJSON->chassis ) )
     {
-      header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+      header( $_SERVER["SERVER_PROTOCOL"]." 404 Not Found" );
       exit;
     }
   }
@@ -107,7 +145,7 @@ function MechDataEndPoint()
   $returnJSON->loadout = new \stdClass;
   if( !GetJSON( sprintf( 'http://mwo.smurfy-net.de/api/data/mechs/%s/loadouts/%s.json', $queryElements[0], $queryElements[1] ), $returnJSON->loadout ) )
   {
-    header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+    header( $_SERVER["SERVER_PROTOCOL"]." 404 Not Found" );
     exit;
   }
   
@@ -115,7 +153,6 @@ function MechDataEndPoint()
   echo json_encode( $returnJSON );
   exit;
 }
-
 
 function GetJSON( $url, &$json )
 {

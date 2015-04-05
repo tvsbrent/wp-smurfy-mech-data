@@ -61,6 +61,10 @@
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
     border-top: 10px solid #303030; }
+  .dsmd-expander.dsmd-expander-arrow-down-disabled {
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #C0C0C0; }
   .dsmd-expander.dsmd-expander-error {
     top: 7px;
     right: 5px;
@@ -78,7 +82,7 @@
     font-size: 19px;
     font-family: Helvetica, Arial, sans-serif; }
 
-.dsmd-expander-errormsg {
+.dsmd-expander-msg {
   position: absolute;
   top: 0;
   left: 0;
@@ -132,7 +136,8 @@
   .dsmd-panel.dsmd-column {
     display: block;
     margin: 0 auto;
-    width: 752px; }
+    width: 754px;
+    overflow: hidden; }
 
 .dsmd-subpanel {
   box-sizing: content-box;
@@ -196,7 +201,7 @@
     left: 2px;
     right: auto; }
 
-.dsmd-compact .dsmd-label {
+.dsmd-compact .dsmd-label-stats-armor {
   right: 4px; }
 
 .dsmd-label-warning {
@@ -208,31 +213,33 @@
 .dsmd-label-info {
   background-color: #3a87ad; }
 
-.dsmd-label-dps, .dsmd-label-dmg, .dsmd-label-ammo, .dsmd-label-cld, .dsmd-label-speed {
+.dsmd-label-dps, .dsmd-label-dmg, .dsmd-label-cld, .dsmd-label-speed {
   background-color: #468847; }
+
+.dsmd-label-ammo {
+  background-color: #999; }
 
 .dsmd-label-range, .dsmd-label-speed, .dsmd-label-cooling, .dsmd-label-hs {
   background-color: #3a87ad; }
 
-.dsmd-label-mech-hardpoint-energy {
-  background-color: #cb7834;
-  color: #000; }
+.dsmd-label-column {
+  max-width: 134px;
+  overflow: hidden; }
+
+.dsmd-label-mech-hardpoint-beam {
+  background-color: #cb7834; }
 
 .dsmd-label-mech-hardpoint-missile {
-  background-color: #6acd97;
-  color: #000; }
+  background-color: #468847; }
 
 .dsmd-label-mech-hardpoint-ams {
-  background-color: #cc6664;
-  color: #000; }
+  background-color: #cc6664; }
 
-.dsmd-label-mech-hardpoint-ecm {
-  background-color: #a1b051;
-  color: #000; }
+.dsmd-label-mech-hardpoint-tech {
+  background-color: #8440c0; }
 
 .dsmd-label-mech-hardpoint-ballistic {
-  background-color: #846b95;
-  color: #000; }
+  background-color: #686395; }
 
 .dsmd-status {
   display: inline;

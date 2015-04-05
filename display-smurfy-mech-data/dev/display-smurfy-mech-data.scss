@@ -13,6 +13,7 @@ $container-width-max: 780px;
 $container-width-min: 220px;
 $panel-width-min: 180px;
 $shared-backgroundcolor: #303030;
+$shared-disabled-backgroundcolor: #C0C0C0;
 $default-border-radius: 3px;
 $size-scrollbar: 25px;
 
@@ -85,9 +86,16 @@ $size-scrollbar: 25px;
     border-bottom: $size-arrow solid $shared-backgroundcolor;
   }
 
-  &.dsmd-expander-arrow-down { border-left: $size-arrow solid transparent;
+  &.dsmd-expander-arrow-down {
+    border-left: $size-arrow solid transparent;
     border-right: $size-arrow solid transparent;
     border-top: $size-arrow solid $shared-backgroundcolor;
+  }
+
+  &.dsmd-expander-arrow-down-disabled {
+    border-left: $size-arrow solid transparent;
+    border-right: $size-arrow solid transparent;
+    border-top: $size-arrow solid $shared-disabled-backgroundcolor;
   }
 
   &.dsmd-expander-error {
@@ -111,7 +119,7 @@ $size-scrollbar: 25px;
   }
 }
 
-.dsmd-expander-errormsg {
+.dsmd-expander-msg {
   position: absolute;
   top: 0;
   left: 0;
@@ -171,7 +179,8 @@ $size-scrollbar: 25px;
   &.dsmd-column {
     display: block;
     margin: 0 auto;
-    width: 752px;
+    width: 754px;
+    overflow: hidden;
   }
 }
 
@@ -257,7 +266,7 @@ $size-scrollbar: 25px;
   }
 }
 
-.dsmd-compact .dsmd-label {
+.dsmd-compact .dsmd-label-stats-armor {
   right: 4px;
 }
 
@@ -273,37 +282,46 @@ $size-scrollbar: 25px;
   background-color: #3a87ad
 }
 
-.dsmd-label-dps, .dsmd-label-dmg, .dsmd-label-ammo, .dsmd-label-cld, .dsmd-label-speed {
+.dsmd-label-dps, .dsmd-label-dmg, .dsmd-label-cld, .dsmd-label-speed {
   background-color: #468847
+}
+
+.dsmd-label-ammo {
+  background-color: #999;
 }
 
 .dsmd-label-range, .dsmd-label-speed, .dsmd-label-cooling, .dsmd-label-hs {
   background-color: #3a87ad
 }
 
-.dsmd-label-mech-hardpoint-energy {
+.dsmd-label-column {
+  max-width: 134px;
+  overflow: hidden;
+}
+
+.dsmd-label-mech-hardpoint-beam {
   background-color: #cb7834;
-  color: #000
+  //color: #000
 }
 
 .dsmd-label-mech-hardpoint-missile {
-  background-color: #6acd97;
-  color: #000
+  background-color: #468847
+  //color: #000
 }
 
 .dsmd-label-mech-hardpoint-ams {
   background-color: #cc6664;
-  color: #000
+  //color: #000
 }
 
-.dsmd-label-mech-hardpoint-ecm {
-  background-color: #a1b051;
-  color: #000
+.dsmd-label-mech-hardpoint-tech {
+  background-color: #8440c0;
+  //color: #000
 }
 
 .dsmd-label-mech-hardpoint-ballistic {
-  background-color: #846b95;
-  color: #000
+  background-color: #686395;
+  //color: #000
 }
 
 .dsmd-status {
