@@ -820,8 +820,8 @@ jQuery( document ).ready( function() {
   // Get the cached data, either locally or from Smurfy.
   var cachedTime = new Date( localStorage.getItem('cached-time') );
   var expireTime = new Date();
-  // We consider the data as having expired after 23 hours.
-  expireTime.setHours( expireTime.getHours() - 23 );
+  // We consider the data as having expired after 46 hours.
+  expireTime.setHours( expireTime.getHours() - 46 );
 
   var cachedDataValid = false;
   if( cachedTime > expireTime ) {
