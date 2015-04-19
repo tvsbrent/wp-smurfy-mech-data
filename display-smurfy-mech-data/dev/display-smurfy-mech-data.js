@@ -20,7 +20,6 @@ var SmurfyApp = {
     components  : 755 },
   AjaxSettings : function( url ) {
     this.url            = url;
-    this.timeout        = 15000;
     this.type           = 'GET';
     this.async          = true;
     this.contentType    = "application/json";
