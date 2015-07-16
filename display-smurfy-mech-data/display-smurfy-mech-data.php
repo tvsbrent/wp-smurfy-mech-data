@@ -7,7 +7,7 @@
 Plugin Name: Display Smurfy Mech Data
 Plugin URI: https://github.com/tvsbrent/wp-smurfy-mech-data
 Description: Adds support for dropdown tooltips to anchors linked to Smurfy builds
-Version: 1.3
+Version: 1.4
 Author: Brent Schmidt
 */
 
@@ -24,7 +24,7 @@ function AddScripts()
   if( !is_admin() )
   {
     wp_enqueue_script('underscore');
-    wp_register_script('display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.js', __FILE__ ), array('jquery'), '1.3', true );
+    wp_register_script('display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.js', __FILE__ ), array('jquery'), '1.4', true );
     wp_enqueue_script('display-smurfy-mech-data');
   }
   
@@ -37,7 +37,7 @@ function AddStyles()
 {
   if( !is_admin() )
   {
-    wp_register_style( 'display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.css', __FILE__ ), array(), '1.3', 'all' );
+    wp_register_style( 'display-smurfy-mech-data', plugins_url( '/display-smurfy-mech-data.min.css', __FILE__ ), array(), '1.4', 'all' );
     wp_enqueue_style( 'display-smurfy-mech-data' );
   }
 }

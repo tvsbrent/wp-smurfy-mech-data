@@ -14,7 +14,7 @@
     -moz-transition: height 0.4s linear;
     transition: height 0.4s linear; }
   .dsmd-container.dsmd-expanded {
-    height: 300px; }
+    height: 320px; }
 
 .dsmd-title {
   box-sizing: content-box;
@@ -130,7 +130,7 @@
   box-sizing: content-box;
   margin: 0;
   padding: 0;
-  height: 262px;
+  height: 282px;
   overflow-x: hidden;
   overflow-y: auto; }
   .dsmd-panel.dsmd-column {
@@ -245,7 +245,7 @@
   display: inline;
   position: absolute;
   line-height: 14px;
-  top: 281px;
+  top: 301px;
   left: 5px;
   z-index: 1;
   width: auto;

@@ -140,9 +140,11 @@ SmurfyApp.MechComponent.prototype.build = function ( chassisData, loadoutData, c
             break;
           case 'CTargetingComputerStats':
             entry.name = entry.name.replace( 'TARGETING COMP.', 'T. COMP.' );
-            // deliberately not breaking here.
+            // NOTE: deliberately not breaking here.
           case 'CGECMStats':
+          case 'CBAPStats':
           case 'CClanBAPStats':
+          case 'CMASCStats':
             entry.style = 'mech-hardpoint-tech';
             break;
         }
@@ -532,7 +534,7 @@ SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
   _.each( loadoutData.stats.ammunition, function( ammo ){
     if( !ammo.hasOwnProperty( 'num_shots' ) &&
         SmurfyApp.cachedAmmo.hasOwnProperty( ammo.id ) ) {
-      ammo.num_shots = ( SmurfyApp.cachedAmmo[ammo.id].numShots || 0 ) * ammo.count;
+      ammo.num_shots = ( SmurfyApp.cachedAmmo[ammo.id].num_shots || 0 ) * ammo.count;
     }
   } );
 
@@ -541,6 +543,7 @@ SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
     ecmInstalled = false,
     activeProbe = false,
     targetingComputer = undefined,
+    masc = undefined,
     commandConsole = false;
   _.each( loadoutData.stats.equipment, function( equipment ){
     var equipmentName = equipment.name.toLowerCase();
@@ -550,9 +553,12 @@ SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
     } else if( equipmentName.indexOf('active probe') != -1 ){
       hasElectronics = true;
       activeProbe = true;
-    } else if( equipmentName.indexOf('targeting comp') != -1 ){
+    } else if( equipmentName.indexOf('targeting comp') != -1 ) {
       hasElectronics = true;
       targetingComputer = equipment.name;
+    } else if( equipmentName.indexOf('masc mk') != -1 ) {
+      hasElectronics = true;
+      masc = equipment.name;
     } else if( equipmentName.indexOf('command console') != -1 ){
       hasElectronics = true;
       commandConsole = true;
@@ -606,6 +612,7 @@ SmurfyApp.appendMechStatsPanel = function( container, dataID ) {
     ecmInstalled        : ecmInstalled,
     activeProbe         : activeProbe,
     targetingComputer   : targetingComputer,
+    masc                : masc,
     commandConsole      : commandConsole,
     ammunition          : loadoutData.stats.ammunition,
     upgrades            : upgrades,
@@ -784,10 +791,10 @@ SmurfyApp.loadEquipmentData = function() {
       } );
   };
 
-  requestEquipment( 'weapons', 'cachedWeapons' );
-  requestEquipment( 'ammo', 'cachedAmmo' );
+  requestEquipment( 'weapons',  'cachedWeapons' );
+  requestEquipment( 'ammo',     'cachedAmmo' );
   requestEquipment( 'omnipods', 'cachedOmnipods' );
-  requestEquipment( 'modules', 'cachedModules' );
+  requestEquipment( 'modules',  'cachedModules' );
 };
 
 jQuery( document ).ready( function() {
@@ -975,6 +982,9 @@ SmurfyApp.panelMechStatsTemplate = _.template(' \
         <%  } %> \
         <%  if( targetingComputer !== undefined ) { %> \
               <li>&nbsp;<span class="dsmd-label dsmd-label-left dsmd-label-info"><%= targetingComputer %></span></li> \
+        <%  } %> \
+        <%  if( masc !== undefined ) { %> \
+            <li>&nbsp;<span class="dsmd-label dsmd-label-left dsmd-label-info"><%= masc %></span></li> \
         <%  } %> \
         <%  if( commandConsole === true ) { %> \
               <li>&nbsp;<span class="dsmd-label dsmd-label-left dsmd-label-info">Command Console</span></li> \
