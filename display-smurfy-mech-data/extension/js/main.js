@@ -1,8 +1,8 @@
 var SmurfyExtension = {};
 
 SmurfyExtension.addContainers = function( useTooltipMode ) {
-  var urlPrefix = '';
-  var smurfyHrefs = $("a[href^=\"http://mwo.smurfy-net.de/mechlab#\"]:not([data-formatted=\"true\"])");
+  var urlPrefix = 'http://mwo.smurfy-net.de/mechlab#';
+  var smurfyHrefs = $("a[href^=\"" + urlPrefix + "\"]:not([data-formatted=\"true\"])");
   if( smurfyHrefs.length == 0 ) {
     return;
   }
@@ -29,6 +29,8 @@ SmurfyExtension.addContainers = function( useTooltipMode ) {
           }
         } );
     } else {
+      // If there is no content in the anchor tag, add generic
+      // "build" text.
       if( _this.text().indexOf( urlPrefix ) >= 0 ) {
         _this.text( "Build" );
       }
