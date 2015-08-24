@@ -1,5 +1,7 @@
 .idea/
+extension-build/
 test/
+extension/js/display-smurfy-mech-data.js
 *.log
 *.bat
 .htaccess

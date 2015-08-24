@@ -1,0 +1,95 @@
+$width_container  : 640px;
+$width_inputPanel : 320px;
+$width_toolbar    : 28px;
+
+$color_darkgrey     : #404040;
+$color_grey         : #808080;
+$color_lightgrey    : #c0c0c0;
+$color_lightergrey  : #e0e0e0;
+
+#container {
+  position: relative;
+  width: $width_container;
+  padding: 5px;
+  margin: 5px auto;
+  font-size: 120%;
+}
+#listBoxWrapper {
+  position: relative;
+}
+#targetUrls {
+  width: $width_container - $width_toolbar - 4px;
+  font-family: "Courier New", Courier, monospace;
+}
+#toolbar {
+  float: right;
+  width: $width_toolbar;
+  a img {
+    overflow: visible;
+    padding: 1px;
+    border-radius: 20px;
+    border: 2px solid transparent;
+    &:hover {
+      border-color: $color_darkgrey;
+    }
+    &:active {
+      background: $color_lightergrey;
+      border-color: $color_darkgrey;
+    }
+  }
+}
+#inputPanelWrapper {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: transparentize( $color_grey, 0.8 );
+}
+#inputPanel {
+  position: absolute;
+  width: $width_inputPanel;
+  top: 60px;
+  left: ($width_container - $width_inputPanel) / 2;
+  border: 1px solid $color_darkgrey;
+  background: white;
+  border-radius: 2px;
+  box-shadow: 2px 2px transparentize( $color_darkgrey, 0.5 );
+}
+#inputTitle {
+  padding: 4px;
+  color: white;
+  background: $color_darkgrey;
+  font-weight: bold;
+}
+#inputField {
+  width: $width_inputPanel - 12px;
+  margin: 4px;
+}
+#inputOK {
+  margin: 0 2px 4px;
+  float: right;
+}
+#inputCancel {
+  margin: 0 4px;
+  float: right;
+}
+#save {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+}
+p.header {
+  border: 1px solid $color_darkgrey;
+  border-radius:  2px;
+  display: block;
+  padding: 0 5px;
+}
+span.checkBoxLabel {
+  vertical-align: middle;
+  padding-left: 5px;
+}
+button {
+  padding: 4px 10px !important;
+}

@@ -1,0 +1,84 @@
+#container {
+  position: relative;
+  width: 640px;
+  padding: 5px;
+  margin: 5px auto;
+  font-size: 120%; }
+
+#listBoxWrapper {
+  position: relative; }
+
+#targetUrls {
+  width: 608px;
+  font-family: "Courier New", Courier, monospace; }
+
+#toolbar {
+  float: right;
+  width: 28px; }
+  #toolbar a img {
+    overflow: visible;
+    padding: 1px;
+    border-radius: 20px;
+    border: 2px solid transparent; }
+    #toolbar a img:hover {
+      border-color: #404040; }
+    #toolbar a img:active {
+      background: #e0e0e0;
+      border-color: #404040; }
+
+#inputPanelWrapper {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(128, 128, 128, 0.2); }
+
+#inputPanel {
+  position: absolute;
+  width: 320px;
+  top: 60px;
+  left: 160px;
+  border: 1px solid #404040;
+  background: white;
+  border-radius: 2px;
+  box-shadow: 2px 2px rgba(64, 64, 64, 0.5); }
+
+#inputTitle {
+  padding: 4px;
+  color: white;
+  background: #404040;
+  font-weight: bold; }
+
+#inputField {
+  width: 308px;
+  margin: 4px; }
+
+#inputOK {
+  margin: 0 2px 4px;
+  float: right; }
+
+#inputCancel {
+  margin: 0 4px;
+  float: right; }
+
+#save {
+  position: absolute;
+  bottom: 2px;
+  right: 2px; }
+
+p.header {
+  border: 1px solid #404040;
+  border-radius: 2px;
+  display: block;
+  padding: 0 5px; }
+
+span.checkBoxLabel {
+  vertical-align: middle;
+  padding-left: 5px; }
+
+button {
+  padding: 4px 10px !important; }
+
+/*# sourceMappingURL=options.css.map */

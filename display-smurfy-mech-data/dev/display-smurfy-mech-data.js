@@ -25,8 +25,7 @@ var SmurfyApp = {
     this.contentType    = "application/json";
     this.ifModified     = false;
     this.dataType       = 'json'; },
-  DataID : function( chassisID, loadoutID )
-  {
+  DataID : function( chassisID, loadoutID ) {
     this.chassis = chassisID;
     this.loadout = loadoutID; },
   MechComponent : function () {
@@ -52,18 +51,20 @@ var SmurfyApp = {
   PanelType : {
     stats       : 0,
     components  : 1 },
-  Months : [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]
+  Months : [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ],
+  chrome : {
+    extensionModeActive : false },
 };
 
 SmurfyApp.DataID.prototype.key = function (){
   return this.chassis + ":" + this.loadout;
 };
 
-SmurfyApp.DataID.prototype.allURL = function(){
+SmurfyApp.DataID.prototype.urlAll = function(){
   return SmurfyApp.urlBase + "?display-smurfy-mech-data-all=" + this.chassis + ":" + this.loadout;
 };
 
-SmurfyApp.DataID.prototype.loadoutURL = function(){
+SmurfyApp.DataID.prototype.urlLoadout = function(){
   return SmurfyApp.urlBase + "?display-smurfy-mech-data-loadout=" + this.chassis + ":" + this.loadout;
 };
 
@@ -229,7 +230,7 @@ SmurfyApp.getChassisAndLoadoutID = function( expander, dataID ) {
     break;
   }
 
-  if( dataID.chassis === null || dataID.loadout === null ) {
+  if( dataID.chassis === undefined || dataID.loadout === undefined ) {
     return false;
   }
 
@@ -463,32 +464,67 @@ SmurfyApp.getMechData = function( container, expander ) {
       }
     } );
 
-    if( !SmurfyApp.getChassisAndLoadoutID( expander, dataID ) ){
+    if( !SmurfyApp.getChassisAndLoadoutID( expander, dataID ) ) {
       throw 'Failed to find Chassis or Loadout ID.';
     }
 
+    var handleResponse = function( response ) {
+      if( !response.success ) {
+        SmurfyApp.handleError( expander, 'Failed to retrieve chassis and loadout data.' );
+        return;
+      }
+      if( response.hasOwnProperty( "chassis" ) ) {
+        SmurfyApp.cachedChassis[dataID.chassis] = response.chassis;
+      }
+      var responseJson = response.loadout;
+      SmurfyApp.cachedLoadouts[dataID.key()] = responseJson;
+      container.trigger( 'dataReady' );
+    };
+
+    // Prep the chrome extension request method.
+    var sendChromeRequest = function( requestChassis ) {
+      chrome.runtime.sendMessage(
+        { type            : "fetchBuild",
+          chassisID       : dataID.chassis,
+          loadoutID       : dataID.loadout,
+          requestChassis  : requestChassis },
+        function( response ) {
+          handleResponse( response );
+        } );
+    };
+
     // See if we cached the chassis data already.
     if( !SmurfyApp.cachedChassis.hasOwnProperty( dataID.chassis ) ) {
-      // We need to get all the data, chassis and loadout.
-      jQuery.ajax( new SmurfyApp.AjaxSettings( dataID.allURL() ) )
-        .done( function( response, textStatus, jqXHR ) {
-          SmurfyApp.cachedChassis[dataID.chassis] = response.chassis;
-          SmurfyApp.cachedLoadouts[dataID.key()] = response.loadout;
-          container.trigger( 'dataReady' );
-        } )
-        .fail( function( jqXHR, textStatus, errorThrown ) {
-          SmurfyApp.handleError( expander, 'Failed to retrieve chassis and loadout data.' );
-        } );
+      if( SmurfyApp.chrome.extensionModeActive ) {
+        sendChromeRequest( true );
+      } else {
+        // We issue a request to a our url, which will then fetch the data
+        // from Smurfy's site. In this case, we need to get all the data,
+        // chassis and loadout.
+        jQuery.ajax( new SmurfyApp.AjaxSettings( dataID.urlAll() ) )
+          .done( function( response, textStatus, jqXHR ) {
+            response.success = true;
+            handleResponse( response );
+          } )
+          .fail( function( jqXHR, textStatus, errorThrown ) {
+            handleResponse( { success: false } );
+          } );
+      }
     } else if( !SmurfyApp.cachedLoadouts.hasOwnProperty( dataID.key() ) ) {
-      jQuery.ajax( new SmurfyApp.AjaxSettings( dataID.loadoutURL() ) )
-        .done( function( response ) {
-          SmurfyApp.cachedLoadouts[dataID.key()] = response.loadout;
-          container.trigger( 'dataReady' );
-        } )
-        .fail( function () {
-          SmurfyApp.handleError( expander, 'Failed to retrieve loadout data.' );
-        } );
+      if( SmurfyApp.chrome.extensionModeActive ) {
+        sendChromeRequest( false );
+      } else {
+        jQuery.ajax( new SmurfyApp.AjaxSettings( dataID.urlLoadout() ) )
+          .done( function( response ) {
+            response.success = true;
+            handleResponse( response );
+          } )
+          .fail( function( jqXHR, textStatus, errorThrown ) {
+            handleResponse( { success : false } );
+          } );
+      }
     } else {
+      // We have all the data cached.
       container.trigger( 'dataReady' );
     }
   } catch ( errorMsg ) {
@@ -497,9 +533,7 @@ SmurfyApp.getMechData = function( container, expander ) {
 };
 
 SmurfyApp.buildViewBody = function( container, dataID ) {
-  var chassisData = SmurfyApp.cachedChassis[dataID.chassis],
-      loadoutData = SmurfyApp.cachedLoadouts[dataID.key()],
-      displayData = {
+  var displayData = {
         isCompact           : SmurfyApp.useCompactStats,
         compactClass        : SmurfyApp.useCompactStats ? 'dsmd-compact' : ''
       };
@@ -728,6 +762,81 @@ SmurfyApp.viewButtonClickHandler = function( e ) {
   container.attr( 'data-selected-panel', selectedType );
 };
 
+SmurfyApp.getEquipmentData = function() {
+
+  // Get the cached data, either locally or from Smurfy.
+
+  // Since we may be requesting the data from the chrome extension,
+  // which will respond asynchronously, we have to separate our
+  // response / validation of the cached data from the request.
+  var validateCachedData = function( cachedTime ) {
+    var expireTime = new Date();
+
+    // We consider the data as having expired after 46 hours.
+    expireTime.setHours( expireTime.getHours() - 46 );
+
+    var cachedDataValid = false;
+    if( cachedTime > expireTime ) {
+      try {
+        // Check to make sure each cached element is valid.
+        var isValid = function( cachedData ) {
+          if( cachedData === undefined || cachedData === null ){
+            return false;
+          }
+          for( var prop in cachedData ) {
+            if( cachedData.hasOwnProperty( prop ) ) {
+              return true;
+            }
+          }
+          return false;
+        };
+        cachedDataValid = isValid( SmurfyApp.cachedWeapons ) &&
+        isValid( SmurfyApp.cachedAmmo ) &&
+        isValid( SmurfyApp.cachedOmnipods ) &&
+        isValid( SmurfyApp.cachedModules );
+      } catch( ex ) {
+        // any errors will trigger a reload of the data below.
+      }
+    }
+    if( cachedDataValid ) {
+      SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.available );
+    } else {
+      SmurfyApp.loadEquipmentData();
+    }
+  };
+
+  // Now request the cached data.
+  if( SmurfyApp.chrome.extensionModeActive ) {
+    chrome.runtime.sendMessage(
+      { type : "getCachedEquipment",
+        items :
+        [
+          'cached-weapons',
+          'cached-ammo',
+          'cached-omnipods',
+          'cached-modules',
+          'cached-time'
+        ] },
+      function( response ) {
+        SmurfyApp.cachedWeapons   = JSON.parse( response['cached-weapons'] );
+        SmurfyApp.cachedAmmo      = JSON.parse( response['cached-ammo'] );
+        SmurfyApp.cachedOmnipods  = JSON.parse( response['cached-omnipods'] );
+        SmurfyApp.cachedModules   = JSON.parse( response['cached-modules'] );
+        var cachedTime = new Date( response['cached-time'] );
+
+        validateCachedData( cachedTime );
+      } );
+  } else {
+    SmurfyApp.cachedWeapons   = JSON.parse( localStorage.getItem( 'cached-weapons' ) );
+    SmurfyApp.cachedAmmo      = JSON.parse( localStorage.getItem( 'cached-ammo' ) );
+    SmurfyApp.cachedOmnipods  = JSON.parse( localStorage.getItem( 'cached-omnipods' ) );
+    SmurfyApp.cachedModules   = JSON.parse( localStorage.getItem( 'cached-modules' ) );
+    var cachedTime = new Date( localStorage.getItem( 'cached-time' ) );
+
+    validateCachedData( cachedTime );
+  }
+};
+
 SmurfyApp.updateEquipmentDataState = function( newState ) {
   if( newState === SmurfyApp.EquipmentDataState.unknown ) {
     return;
@@ -772,23 +881,41 @@ SmurfyApp.loadEquipmentData = function() {
 
   SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.loading );
 
-  var completedRequests = 0;
   var requestEquipment = function ( equipmentType, equipmentCacheName ) {
-    jQuery.ajax( new SmurfyApp.AjaxSettings( SmurfyApp.urlBase + "?display-smurfy-mech-equipment=" + equipmentType ) )
-      .done( function( response, textStatus, jqXHR ) {
-        SmurfyApp[equipmentCacheName] = response;
-        localStorage.setItem( 'cached-' + equipmentType, JSON.stringify( response ) );
-
-        ++completedRequests;
-        if( completedRequests === 4 ) {
-          localStorage.setItem( 'cached-time', new Date() );
-          SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.available );
+    if( SmurfyApp.chrome.extensionModeActive ) {
+      chrome.runtime.sendMessage(
+        { type : "requestEquipmentType", equipmentType : equipmentType },
+        function( response ) {
+          cacheEquipment( response.data, equipmentType, equipmentCacheName );
         }
-      } )
-      .fail( function () {
-        SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.error );
-        console.log( "Failed to load " + equipmentType + " data." );
-      } );
+      );
+    } else {
+      jQuery.ajax( new SmurfyApp.AjaxSettings( SmurfyApp.urlBase + "?display-smurfy-mech-equipment=" + equipmentType ) )
+        .done( function( response, textStatus, jqXHR ) {
+          localStorage.setItem( 'cached-' + equipmentType, JSON.stringify( response ) );
+          cacheEquipment( response, equipmentType, equipmentCacheName );
+        } )
+        .fail( function() {
+          SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.error );
+          console.log( "Failed to load " + equipmentType + " data." );
+        } );
+    }
+  };
+
+  // This will cache the equipment.
+  var completedRequests = 0;
+  var cacheEquipment = function( response, equipmentType, equipmentCacheName ) {
+    SmurfyApp[equipmentCacheName] = response;
+    ++completedRequests;
+    if( completedRequests === 4 ) {
+      var timestamp = new Date().toString();
+      if( SmurfyApp.chrome.extensionModeActive ) {
+        chrome.runtime.sendMessage( { type: 'setLocalStorageItem', itemName: 'cached-time', item: timestamp } );
+      } else {
+        localStorage.setItem( 'cached-time', timestamp );
+      }
+      SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.available );
+    }
   };
 
   requestEquipment( 'weapons',  'cachedWeapons' );
@@ -797,7 +924,12 @@ SmurfyApp.loadEquipmentData = function() {
   requestEquipment( 'modules',  'cachedModules' );
 };
 
-jQuery( document ).ready( function() {
+SmurfyApp.initialize = function( ActivateChromeExtensionMode ) {
+
+  if( ActivateChromeExtensionMode !== null ) {
+    SmurfyApp.chrome.extensionModeActive = ActivateChromeExtensionMode;
+  }
+
   // Grab a single container object. If none exist, then we'll
   // just leave, as there's nothing on this page for us.
   var singleContainer = jQuery('.dsmd-container').first();
@@ -824,46 +956,7 @@ jQuery( document ).ready( function() {
   jQuery('body').append( SmurfyApp.messageBoxTemplate() );
   SmurfyApp.messageBox = jQuery.extend( SmurfyApp.messageBox, jQuery( '#dsmd-expander-message') );
 
-  // Get the cached data, either locally or from Smurfy.
-  var cachedTime = new Date( localStorage.getItem('cached-time') );
-  var expireTime = new Date();
-  // We consider the data as having expired after 46 hours.
-  expireTime.setHours( expireTime.getHours() - 46 );
-
-  var cachedDataValid = false;
-  if( cachedTime > expireTime ) {
-    try {
-      SmurfyApp.cachedWeapons = JSON.parse( localStorage.getItem( 'cached-weapons' ) );
-      SmurfyApp.cachedAmmo = JSON.parse( localStorage.getItem( 'cached-ammo' ) );
-      SmurfyApp.cachedOmnipods = JSON.parse( localStorage.getItem( 'cached-omnipods' ) );
-      SmurfyApp.cachedModules = JSON.parse( localStorage.getItem( 'cached-modules' ) );
-
-      // Check to make sure each one is valid.
-      var isValid = function( cachedData ) {
-        if( cachedData === undefined || cachedData === null ){
-          return false;
-        }
-        for( var prop in cachedData ) {
-          if( cachedData.hasOwnProperty( prop ) ) {
-            return true;
-          }
-        }
-        return false;
-      };
-      cachedDataValid = isValid( SmurfyApp.cachedWeapons ) &&
-                        isValid( SmurfyApp.cachedAmmo ) &&
-                        isValid( SmurfyApp.cachedOmnipods ) &&
-                        isValid( SmurfyApp.cachedModules );
-    } catch( ex ) {
-      // any errors will trigger a reload of the data.
-    }
-  }
-
-  if( cachedDataValid ) {
-    SmurfyApp.updateEquipmentDataState( SmurfyApp.EquipmentDataState.available );
-  } else {
-    SmurfyApp.loadEquipmentData();
-  }
+  SmurfyApp.getEquipmentData();
 
   // Setup the container event handlers
   jQuery('.dsmd-container')
@@ -900,6 +993,20 @@ jQuery( document ).ready( function() {
     resizeID = setTimeout( SmurfyApp.handleResizeComplete, 200 );
   });
 
+};
+
+// jQuery initialization.
+jQuery( document ).ready( function() {
+  if( window.chrome &&
+      chrome.runtime &&
+      chrome.runtime.id ) {
+    // This code is being run as part of a Chrome extension.
+    // Let it call for the initialize.
+    SmurfyApp.chrome.extensionModeActive = true;
+    return;
+  }
+
+  SmurfyApp.initialize();
 } );
 
 //////////////////////////////////////////////////////////////

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smurfy Build Embedder Options</title>
+  <link rel="stylesheet" href='../css/options.css' type='text/css' />
+</head>
+<body>
+<div id="container">
+  <p class="header"><strong>Monitored Locations</strong></p>
+  <div id="listBoxWrapper">
+    <select id="targetUrls" size="6">
+    </select>
+    <div id="toolbar">
+      <a href="#" id="toolbarAdd"><img src="../assets/icon_add.png" width="24" height="24"/></a>
+      <a href="#" id="toolbarEdit"><img src="../assets/icon_edit.png" width="24" height="24"/></a>
+      <a href="#" id="toolbarDelete"><img src="../assets/icon_delete.png" width="24" height="24"/></a>
+    </div>
+  </div>
+  <div id="inputPanelWrapper">
+    <div id="inputPanel">
+      <div id="inputTitle">Add Entry</div>
+      <input id="inputField" />
+      <button id="inputCancel">Cancel</button>
+      <button id="inputOK">OK</button>
+    </div>
+  </div>
+  <p>When you navigate to a page at one of the locations listed above, any anchor tags (links)
+    on that page that point to Smurfy builds will be reformatted into an embedded window.</p>
+  <p class="header"><strong>Mode</strong></p>
+  <p><input type="checkbox" id="inputTooltipMode"><span class="checkBoxLabel">Use "Mech Tooltip" Mode</span></p>
+  <p>When in "Tooltip" mode, the build will be displayed using the format seen on many forums, such as on the NoGutsNoGalaxy.net build forums.</p>
+  <button id="save" data-modal-suppressed="true">Save</button>
+</div>
+<script src="../js/jquery-2.1.4.min.js"></script>
+<script src="../js/options.js"></script>
+</body>
+</html>

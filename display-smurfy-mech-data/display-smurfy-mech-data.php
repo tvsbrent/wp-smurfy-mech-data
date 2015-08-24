@@ -285,11 +285,20 @@ function FindSmurfyLinks( $content )
 
 function FormatSmurfyLinks( $smurfyLink )
 {
+  // Add the "data-formatted" attribute to the link.
+  $link = $smurfyLink->link;
+  $pos = strpos( $link, ">" );
+  
+  if( $pos !== FALSE )
+  {
+    $link = substr( $link, 0, $pos - 1 ) . " data-formatted=\"true\"" . substr( $link, $pos, strlen( $link ) );
+  }
+  
   $body =
 <<<EOD
   <div class="dsmd-container dsmd-animation">
     <div class="dsmd-title">
-      {$smurfyLink->link}
+      {$link}
       <span class="dsmd-expander dsmd-expander-arrow-down"></span>
     </div>
   </div>\n

@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro");
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("chrome-extension://__MSG_@@extension_id__/fonts/SourceSansPro-Regular.ttf"); }
 .dsmd-container {
   box-sizing: content-box;
   position: relative;
@@ -334,9 +336,5 @@
     -ms-transform: rotate(360deg);
     -o-transform: rotate(360deg);
     transform: rotate(360deg); } }
-/*@font-face {
-  font-family: "Source Sans Pro";
-  src: url( "chrome-extension://__MSG_@@extension_id__/fonts/SourceSansPro-Regular.ttf" );
-}*/
 
-/*# sourceMappingURL=display-smurfy-mech-data.css.map */
+/*# sourceMappingURL=display-smurfy-mech-data-extension.css.map */
